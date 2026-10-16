@@ -1,0 +1,46 @@
+
+# Local secrets/runtime
+.env
+.upstox-token.json
+.telegram-watcher-state.json
+.telegram-watcher-state.json.prev
+.watchdog.pid
+.signal-history.json*
+node_modules/
+*backup*
+
+# Local secrets/runtime
+.env
+.upstox-token.json
+.telegram-watcher-state.json
+.telegram-watcher-state.json.prev
+.watchdog.pid
+.signal-history.json*
+node_modules/
+*backup*
+
+# Extra safety: keep local secrets and runtime data out of Git
+.env*
+!.env.example
+*token*
+*secret*
+*credential*
+*.log
+*.bak
+*.prev
+*.BEFORE-*
+*.before-*
+.trashed-*
+*backup*
+node_modules/
+.signal-history.json*
+.telegram-watcher-state.json*
+.watchdog.pid
+AITradingWebsite-main/
+language-ui-fix-RvAuYO/
+recovery-history-*/
+
+# Local debugging and failed test artifacts
+public/*.backup
+public/*.failed*
+public/chart-debug.html

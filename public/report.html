@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>
+    AI Trading Analyst
+  </title>
+
+  <link
+    rel="stylesheet"
+    href="style.css?v=pickerfix1792087454"
+  >
+<link rel="stylesheet" href="premium-dashboard.css?v=1789578631558">
+<link rel="stylesheet" href="site-navigation.css?v=1789579142177">
+</head>
+
+<body>
+
+<header class="topbar">
+
+  <div class="api-badge-group">
+      <div
+        id="connectionBadge"
+        class="badge"
+      >
+        Checking…
+      </div>
+
+      <button
+        id="indiaApiBadge"
+        class="badge india-api-badge"
+        type="button"
+        title="Indian Market API"
+      >
+
+      </button>
+  </div>
+
+</header>
+
+<main class="container">
+
+  <section class="card controls">
+
+    <div class="field market-picker-field">
+      <label>Market Pair</label>
+
+      <button
+        id="pairPickerButton"
+        class="pair-picker-button"
+        type="button"
+      >
+        <span class="pair-picker-main">
+          <span
+            id="selectedPairSymbol"
+            class="pair-picker-symbol"
+          >
+            ETH/USD
+          </span>
+
+          <span
+            id="selectedPairMeta"
+            class="pair-picker-meta"
+          >
+            Crypto • Binance
+          </span>
+        </span>
+
+        <span class="pair-picker-arrow">
+          ›
+        </span>
+      </button>
+
+      <input
+        id="symbol"
+        value="ETH/USD"
+        type="hidden"
+      >
+
+      <input
+        id="exchange"
+        value="Binance"
+        type="hidden"
+      >
+    </div>
+
+    <div class="field">
+      <label>Trading Style</label>
+
+      <select id="tradingStyle">
+
+        <option value="scalping">
+          Scalping
+        </option>
+
+        <option value="intraday">
+          Intraday Trading
+        </option>
+
+        <option
+          value="swing"
+          selected
+        >
+          Swing Trading
+        </option>
+
+      </select>
+    </div>
+
+
+    <div class="field">
+      <label>Language</label>
+
+      <select id="languageMode">
+
+        <option
+          value="hinglish"
+          selected
+        >
+          Hinglish
+        </option>
+
+        <option value="english">
+          English
+        </option>
+
+      </select>
+    </div>
+
+
+    <div class="field">
+      <label>Timeframe</label>
+
+      <select id="interval">
+
+        <option value="15min">
+          15 Minute
+        </option>
+
+        <option
+          value="1h"
+          selected
+        >
+          1 Hour
+        </option>
+
+        <option value="4h">
+          4 Hour
+        </option>
+
+        <option value="1day">
+          1 Day
+        </option>
+
+      </select>
+    </div>
+
+    <button id="analyzeButton">
+      Analyze Market
+    </button>
+
+  </section>
+
+
+  <section
+    id="marketHeader"
+    class="market-title"
+  >
+    ETH/USD • Binance
+  </section>
+
+
+  <section class="grid">
+
+    <div class="card">
+      <div class="label">
+        DATA SOURCE
+      </div>
+
+      <div
+        id="dataSource"
+        class="value"
+      >
+        Waiting
+      </div>
+    </div>
+
+
+    <div class="card">
+      <div class="label">
+        LAST PRICE
+      </div>
+
+      <div
+        id="lastPrice"
+        class="value large"
+      >
+        --
+      </div>
+    </div>
+
+
+    <div class="card">
+      <div class="label">
+        CANDLES
+      </div>
+
+      <div
+        id="candleCount"
+        class="value"
+      >
+        --
+      </div>
+    </div>
+
+
+    <div class="card">
+      <div class="label">
+        TIMEFRAME
+      </div>
+
+      <div
+        id="timeframe"
+        class="value"
+      >
+        1H
+      </div>
+    </div>
+
+  </section>
+
+
+  <section class="card analysis style-analysis-card">
+
+    <div
+      id="styleToggleHead"
+      class="style-toggle-head"
+      role="button"
+      tabindex="0"
+      aria-expanded="false"
+    >
+      <div>
+        <div class="label">
+          TRADING STYLE ANALYSIS
+        </div>
+
+        <h2
+          id="styleState"
+          class="neutral"
+        >
+          Waiting
+        </h2>
+      </div>
+
+      <span
+        id="styleExpandIcon"
+        class="style-expand-icon"
+        aria-hidden="true"
+      >▼</span>
+    </div>
+
+    <div
+      id="styleDetails"
+      class="analysis-lines style-details-collapsed"
+    >
+      Select trading style and analyze market.
+    </div>
+
+  </section>
+
+
+  <section class="card analysis">
+    <div
+      class="engine-history-head"
+      role="button"
+      tabindex="0"
+      aria-expanded="false"
+    >
+      <div class="engine-history-head-left">
+        <div
+      id="structureLabel"
+      class="label"
+    >
+      MARKET STRUCTURE
+    </div>
+
+    <h2
+      id="structureTrend"
+      class="neutral"
+    >
+      Waiting
+    </h2>
+      </div>
+
+      <span
+        class="engine-history-icon"
+        aria-hidden="true"
+      >▼</span>
+    </div>
+
+    <div class="engine-history-body engine-history-body-collapsed">
+      <div
+      id="structureDetails"
+      class="analysis-lines"
+    >
+      Analyze the market to begin.
+    </div>
+    </div>
+</section>
+
+
+  <section class="card analysis">
+    <div
+      class="engine-history-head"
+      role="button"
+      tabindex="0"
+      aria-expanded="false"
+    >
+      <div class="engine-history-head-left">
+        <div class="label">
+      PRICE ACTION ENGINE
+    </div>
+
+    <h2 id="momentumState">
+      Waiting
+    </h2>
+      </div>
+
+      <span
+        class="engine-history-icon"
+        aria-hidden="true"
+      >▼</span>
+    </div>
+
+    <div class="engine-history-body engine-history-body-collapsed">
+      <div
+      id="priceActionDetails"
+      class="analysis-lines"
+    >
+      Analyze the market to begin.
+    </div>
+    </div>
+</section>
+
+
+  <section class="card analysis">
+    <div
+      class="engine-history-head"
+      role="button"
+      tabindex="0"
+      aria-expanded="false"
+    >
+      <div class="engine-history-head-left">
+        <div class="label">
+      SMC / ICT BRAIN
+    </div>
+
+    <h2
+      id="smcContext"
+      class="neutral"
+    >
+      Waiting
+    </h2>
+      </div>
+
+      <span
+        class="engine-history-icon"
+        aria-hidden="true"
+      >▼</span>
+    </div>
+
+    <div class="engine-history-body engine-history-body-collapsed">
+      <div
+      id="smcDetails"
+      class="analysis-lines"
+    >
+      Analyze the market to begin.
+    </div>
+    </div>
+</section>
+
+
+  <section class="card analysis">
+    <div
+      class="engine-history-head"
+      role="button"
+      tabindex="0"
+      aria-expanded="false"
+    >
+      <div class="engine-history-head-left">
+        <div class="label">
+      MULTI-TIMEFRAME BRAIN
+    </div>
+
+    <h2
+      id="mtfState"
+      class="neutral"
+    >
+      Waiting
+    </h2>
+      </div>
+
+      <span
+        class="engine-history-icon"
+        aria-hidden="true"
+      >▼</span>
+    </div>
+
+    <div class="engine-history-body engine-history-body-collapsed">
+      <div
+      id="mtfDetails"
+      class="analysis-lines"
+    >
+      Analyze the market to begin.
+    </div>
+    </div>
+</section>
+
+
+  <section
+    id="fundamentalCard"
+    class="card analysis fundamental-analysis-card hidden"
+  >
+    <div
+      class="engine-history-head"
+      role="button"
+      tabindex="0"
+      aria-expanded="false"
+    >
+      <div class="engine-history-head-left">
+        <div class="label">
+      FUNDAMENTAL ANALYSIS
+    </div>
+
+    <h2
+      id="fundamentalState"
+      class="neutral"
+    >
+      Waiting
+    </h2>
+      </div>
+
+      <span
+        class="engine-history-icon"
+        aria-hidden="true"
+      >▼</span>
+    </div>
+
+    <div class="engine-history-body engine-history-body-collapsed">
+      <div
+        id="fundamentalDetails"
+        class="analysis-lines"
+      >
+        Forex macro data will appear after analysis.
+      </div>
+    </div>
+</section>
+
+
+  <section
+    id="newsSentimentCard"
+    class="card analysis news-sentiment-card"
+  >
+    <div
+      class="engine-history-head"
+      role="button"
+      tabindex="0"
+      aria-expanded="false"
+    >
+      <div class="engine-history-head-left">
+        <div class="label">
+      NEWS / SENTIMENT BRAIN
+    </div>
+
+    <h2
+      id="newsSentimentState"
+      class="neutral"
+    >
+      Waiting
+    </h2>
+      </div>
+
+      <span
+        class="engine-history-icon"
+        aria-hidden="true"
+      >▼</span>
+    </div>
+
+    <div class="engine-history-body engine-history-body-collapsed">
+      <div
+        id="newsSentimentDetails"
+        class="analysis-lines"
+      >
+        Relevant market news and sentiment will appear here.
+      </div>
+    </div>
+</section>
+
+
+  <section class="card analysis">
+    <div
+      class="engine-history-head"
+      role="button"
+      tabindex="0"
+      aria-expanded="false"
+    >
+      <div class="engine-history-head-left">
+        <div class="label">
+      TRADE PLAN / RISK ENGINE
+    </div>
+
+    <h2
+      id="riskState"
+      class="neutral"
+    >
+      Waiting
+    </h2>
+      </div>
+
+      <span
+        class="engine-history-icon"
+        aria-hidden="true"
+      >▼</span>
+    </div>
+
+    <div class="engine-history-body engine-history-body-collapsed">
+      <div
+      id="riskDetails"
+      class="analysis-lines"
+    >
+      Entry, Stop Loss and targets will appear after analysis.
+    </div>
+    </div>
+</section>
+
+
+  <section class="card analysis">
+    <div
+      class="engine-history-head"
+      role="button"
+      tabindex="0"
+      aria-expanded="false"
+    >
+      <div class="engine-history-head-left">
+        <div class="label">
+      FINAL MARKET THESIS / REASONING ENGINE
+    </div>
+
+    <h2
+      id="reasoningState"
+      class="neutral"
+    >
+      Waiting
+    </h2>
+      </div>
+
+      <span
+        class="engine-history-icon"
+        aria-hidden="true"
+      >▼</span>
+    </div>
+
+    <div class="engine-history-body engine-history-body-collapsed">
+      <div
+      id="reasoningDetails"
+      class="analysis-lines"
+    >
+      Full market reasoning will appear after analysis.
+    </div>
+    </div>
+</section>
+
+
+  <section class="card analysis">
+
+    <div class="label">
+      ANALYSIS STATUS
+    </div>
+
+    <h2 id="analysisState">
+      Ready
+    </h2>
+
+    <p id="analysisMessage">
+      Real market data connection ready.
+    </p>
+
+  </section>
+
+
+  <section
+    id="whySignalCard"
+    class="card why-signal-card hidden"
+  >
+
+    <div
+      class="why-signal-heading"
+      id="whySignalHeading"
+      role="button"
+      tabindex="0"
+      aria-expanded="false"
+      aria-controls="whySignalBody"
+    >
+      <div>
+        <div class="label">
+          CONFIRMATION
+        </div>
+        <h2>
+          WHY THIS SIGNAL WAS CONFIRMED
+        </h2>
+        <!-- Title dynamically updated by renderWhySignal based on risk.decision -->
+      </div>
+      <span class="why-signal-arrow" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </span>
+    </div>
+
+    <div
+      id="whySignalBody"
+      class="why-signal-body why-signal-collapsed"
+    >
+      <div class="why-signal-empty">
+        Signal confirmation details will appear after analysis.
+      </div>
+    </div>
+
+  </section>
+
+
+  <section class="card">
+
+    <div class="label">
+      PRICE RANGE
+    </div>
+
+    <div
+      id="priceChart"
+      class="chart"
+    >
+    </div>
+
+  </section>
+
+</main>
+
+
+<div
+  id="pairPickerOverlay"
+  class="pair-picker-overlay hidden"
+  aria-hidden="true"
+>
+  <section
+    id="pairPickerSheet"
+    class="pair-picker-sheet"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Choose market pair"
+  >
+
+    <div class="pair-picker-handle">
+    </div>
+
+    <div class="pair-picker-header">
+
+      <div>
+        <div class="pair-picker-eyebrow">
+          MARKET SELECTOR
+        </div>
+
+        <h2>
+          Choose Pair
+        </h2>
+      </div>
+
+      <button
+        id="pairPickerClose"
+        class="pair-picker-close"
+        type="button"
+        aria-label="Close pair selector"
+      >
+        ×
+      </button>
+
+    </div>
+
+
+    <div class="pair-picker-tabs">
+
+      <button
+        id="cryptoTab"
+        class="pair-picker-tab active"
+        type="button"
+        data-market-type="crypto"
+      >
+        Crypto
+      </button>
+
+      <button
+        id="forexTab"
+        class="pair-picker-tab"
+        type="button"
+        data-market-type="forex"
+      >
+        Forex
+      </button>
+
+      <button
+        id="indiaTab"
+        class="pair-picker-tab"
+        type="button"
+        data-market-type="stocks"
+      >
+        Indian Stocks
+      </button>
+
+    </div>
+
+
+    <div class="pair-picker-views">
+
+      <button
+        class="pair-view-tab active"
+        type="button"
+        data-pair-view="all"
+      >
+        All
+      </button>
+
+      <button
+        class="pair-view-tab"
+        type="button"
+        data-pair-view="favorites"
+      >
+        ★ Favorites
+      </button>
+
+      <button
+        class="pair-view-tab"
+        type="button"
+        data-pair-view="recent"
+      >
+        Recent
+      </button>
+
+    </div>
+
+
+    <div class="pair-picker-search-wrap">
+
+      <span class="pair-picker-search-icon">
+        ⌕
+      </span>
+
+      <input
+        id="pairSearch"
+        class="pair-picker-search"
+        type="search"
+        placeholder="Search BTC/USD, EUR/USD, RELIANCE, TCS..."
+        autocomplete="off"
+      >
+
+    </div>
+
+
+    <div
+      id="pairPickerStatus"
+      class="pair-picker-status"
+    >
+      Loading market pairs…
+    </div>
+
+
+    <div
+      id="pairList"
+      class="pair-list"
+    >
+    </div>
+
+
+    <section
+      id="exchangeChooser"
+      class="exchange-chooser hidden"
+    >
+
+      <div
+        id="exchangeChooserTitle"
+        class="exchange-chooser-title"
+      >
+        Available exchanges
+      </div>
+
+      <div
+        id="exchangeList"
+        class="exchange-list"
+      >
+      </div>
+
+    </section>
+
+  </section>
+</div>
+
+
+<script src="site-navigation.js?v=1789579068779"></script>
+<script src="engines.js"></script>
+<script src="smc.js"></script>
+<script src="mtf.js"></script>
+<script src="mode-engine.js"></script>
+<script src="risk.js"></script>
+<script src="reasoning.js"></script>
+<script src="app.js?v=chartfix20261016"></script>
+
+</body>
+</html>
