@@ -1946,15 +1946,6 @@ body.classList.toggle(
         "%"
       );
 
-    renderStatsTable(
-      "pairStats",
-      stats?.byPair || []
-    );
-
-    renderStatsTable(
-      "styleStats",
-      stats?.byStyle || []
-    );
   }
 
 
