@@ -9,8 +9,8 @@ body {
 }
 
 body {
-  background: #050b14;
-  color: #f8fafc;
+  background: #020d1a;
+  color: #eef6ff;
   font-family:
     Arial,
     sans-serif;
@@ -32,7 +32,7 @@ body.has-site-navigation {
 
 .eyebrow,
 .section-label {
-  color: #60a5fa;
+  color: #58ceff;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: .12em;
@@ -45,14 +45,14 @@ body.has-site-navigation {
 
 .history-topbar p {
   margin: 0;
-  color: #94a3b8;
+  color: #8faac7;
   line-height: 1.45;
 }
 
 .status-badge {
   border: 1px solid #23344b;
-  background: #0b1625;
-  color: #bfdbfe;
+  background: #051827;
+  color: #b9dcf5;
   padding: 8px 11px;
   border-radius: 999px;
   font-size: 12px;
@@ -75,15 +75,15 @@ body.has-site-navigation {
 }
 
 .summary-card {
-  background: #0b1625;
-  border: 1px solid #1e2d42;
+  background: #051827;
+  border: 1px solid #214565;
   border-radius: 15px;
   padding: 14px;
 }
 
 .summary-card span {
   display: block;
-  color: #94a3b8;
+  color: #8faac7;
   font-size: 11px;
   margin-bottom: 7px;
 }
@@ -96,8 +96,8 @@ body.has-site-navigation {
 
 .history-panel,
 .signal-card {
-  background: #0b1625;
-  border: 1px solid #1e2d42;
+  background: #051827;
+  border: 1px solid #214565;
   border-radius: 17px;
 }
 
@@ -121,7 +121,7 @@ body.has-site-navigation {
 .refresh-button {
   border: 1px solid #28405d;
   background: #101f33;
-  color: #f8fafc;
+  color: #eef6ff;
   padding: 9px 13px;
   border-radius: 11px;
   font-weight: 700;
@@ -138,15 +138,15 @@ body.has-site-navigation {
 .filter-grid label span {
   display: block;
   margin-bottom: 6px;
-  color: #94a3b8;
+  color: #8faac7;
   font-size: 11px;
 }
 
 .filter-grid select {
   width: 100%;
   border: 1px solid #23344b;
-  background: #07111f;
-  color: #f8fafc;
+  background: #041628;
+  color: #eef6ff;
   border-radius: 10px;
   padding: 10px;
   outline: none;
@@ -156,8 +156,8 @@ body.has-site-navigation {
   margin-top: 13px;
   padding: 11px 12px;
   border-radius: 11px;
-  background: #07111f;
-  color: #94a3b8;
+  background: #041628;
+  color: #8faac7;
   font-size: 12px;
   line-height: 1.5;
 }
@@ -176,7 +176,7 @@ body.has-site-navigation {
   justify-content: space-between;
   gap: 12px;
   padding: 15px;
-  border-bottom: 1px solid #1e2d42;
+  border-bottom: 1px solid #214565;
 }
 
 .signal-pair {
@@ -186,7 +186,7 @@ body.has-site-navigation {
 
 .signal-sub {
   margin-top: 5px;
-  color: #94a3b8;
+  color: #8faac7;
   font-size: 12px;
 }
 
@@ -206,33 +206,33 @@ body.has-site-navigation {
 }
 
 .signal-status.active {
-  background: #123625;
-  color: #86efac;
+  background: #0a2c1a;
+  color: #7ee2a8;
 }
 
 .signal-status.inactive {
-  background: #2b313c;
-  color: #cbd5e1;
+  background: #051827;
+  color: #a5b8ce;
 }
 
 .direction-pill.bullish {
-  background: #123625;
-  color: #86efac;
+  background: #0a2c1a;
+  color: #7ee2a8;
 }
 
 .direction-pill.bearish {
-  background: #3b1c24;
-  color: #fca5a5;
+  background: #3a0f1a;
+  color: #ff97a8;
 }
 
 .direction-pill.neutral {
   background: #273244;
-  color: #cbd5e1;
+  color: #a5b8ce;
 }
 
 .style-pill {
-  background: #10243f;
-  color: #93c5fd;
+  background: #0a2340;
+  color: #7fc4ff;
   margin-left: 5px;
 }
 
@@ -241,7 +241,7 @@ body.has-site-navigation {
 }
 
 .signal-time {
-  color: #bfdbfe;
+  color: #b9dcf5;
   font-size: 12px;
   margin-bottom: 13px;
 }
@@ -254,14 +254,14 @@ body.has-site-navigation {
 }
 
 .data-box {
-  background: #07111f;
+  background: #041628;
   border-radius: 11px;
   padding: 10px 11px;
 }
 
 .data-box span {
   display: block;
-  color: #94a3b8;
+  color: #8faac7;
   font-size: 10px;
   margin-bottom: 5px;
 }
@@ -282,14 +282,14 @@ body.has-site-navigation {
 .quality-track {
   flex: 1;
   height: 9px;
-  background: #07111f;
+  background: #041628;
   border-radius: 999px;
   overflow: hidden;
 }
 
 .quality-fill {
   height: 100%;
-  background: #60a5fa;
+  background: #58ceff;
   border-radius: inherit;
 }
 
@@ -301,13 +301,13 @@ body.has-site-navigation {
 
 .logic-details {
   margin-top: 14px;
-  border-top: 1px solid #1e2d42;
+  border-top: 1px solid #214565;
   padding-top: 12px;
 }
 
 .logic-details summary {
   cursor: pointer;
-  color: #bfdbfe;
+  color: #b9dcf5;
   font-weight: 700;
 }
 
@@ -318,14 +318,14 @@ body.has-site-navigation {
 }
 
 .logic-box {
-  background: #07111f;
+  background: #041628;
   border-radius: 11px;
   padding: 11px;
 }
 
 .logic-box span {
   display: block;
-  color: #60a5fa;
+  color: #58ceff;
   font-size: 10px;
   font-weight: 800;
   margin-bottom: 6px;
@@ -336,7 +336,7 @@ body.has-site-navigation {
   margin: 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  color: #dbeafe;
+  color: #eaf6ff;
   font-family: inherit;
   font-size: 12px;
   line-height: 1.55;
@@ -344,18 +344,18 @@ body.has-site-navigation {
 
 .closed-line {
   margin-top: 12px;
-  color: #94a3b8;
+  color: #8faac7;
   font-size: 11px;
   line-height: 1.5;
 }
 
 .empty-state {
   text-align: center;
-  background: #0b1625;
-  border: 1px solid #1e2d42;
+  background: #051827;
+  border: 1px solid #214565;
   border-radius: 16px;
   padding: 34px 16px;
-  color: #94a3b8;
+  color: #8faac7;
 }
 
 @media(max-width: 700px) {
@@ -417,52 +417,52 @@ body.has-site-navigation {
 }
 
 .outcome-open {
-  background: #10243f;
-  color: #93c5fd;
+  background: #0a2340;
+  color: #7fc4ff;
 }
 
 .outcome-t1 {
-  background: #17351f;
-  color: #bbf7d0;
+  background: #0a2c1a;
+  color: #7ee2a8;
 }
 
 .outcome-t2 {
-  background: #123625;
-  color: #86efac;
+  background: #0a2c1a;
+  color: #7ee2a8;
 }
 
 .outcome-sl {
-  background: #3b1c24;
-  color: #fca5a5;
+  background: #3a0f1a;
+  color: #ff97a8;
 }
 
 .outcome-invalidated {
-  background: #2b313c;
-  color: #cbd5e1;
+  background: #051827;
+  color: #a5b8ce;
 }
 
 .outcome-ambiguous {
-  background: #3a2d16;
-  color: #fde68a;
+  background: #052b46;
+  color: #ffd05a;
 }
 
 .outcome-expired {
-  background: #312e3f;
-  color: #ddd6fe;
+  background: #0a2340;
+  color: #b9dcf5;
 }
 
 
 .outcome-style-changed {
-  background: #332816;
-  color: #fcd34d;
+  background: #052b46;
+  color: #ffd05a;
 }
 
 
 /* ===== Lifetime Statistics Dashboard ===== */
 
 .stats-panel {
-  background: #0b1625;
-  border: 1px solid #1e2d42;
+  background: #051827;
+  border: 1px solid #214565;
   border-radius: 17px;
   padding: 15px;
   margin-bottom: 14px;
@@ -478,7 +478,7 @@ body.has-site-navigation {
 
 .statistics-note {
   margin-top: 12px;
-  color: #94a3b8;
+  color: #8faac7;
   font-size: 11px;
   line-height: 1.5;
 }
@@ -492,8 +492,8 @@ body.has-site-navigation {
 }
 
 .breakdown-card {
-  background: #07111f;
-  border: 1px solid #1e2d42;
+  background: #041628;
+  border: 1px solid #214565;
   border-radius: 13px;
   padding: 12px;
   min-width: 0;
@@ -518,21 +518,21 @@ body.has-site-navigation {
 .stats-table th,
 .stats-table td {
   padding: 8px 9px;
-  border-bottom: 1px solid #1e2d42;
+  border-bottom: 1px solid #214565;
   text-align: left;
 }
 
 .stats-table th {
-  color: #93c5fd;
+  color: #7fc4ff;
   font-size: 10px;
 }
 
 .stats-table td {
-  color: #dbeafe;
+  color: #eaf6ff;
 }
 
 .stats-empty {
-  color: #94a3b8;
+  color: #8faac7;
   padding: 10px 0;
   font-size: 12px;
 }
@@ -560,7 +560,7 @@ body.has-site-navigation {
   width: 100%;
   box-sizing: border-box;
   border: 1px solid #23344b;
-  background: #07111f;
+  background: #041628;
   color: #e5eefb;
   border-radius: 11px;
   padding: 11px 12px;
@@ -576,8 +576,8 @@ body.has-site-navigation {
 
 .export-button {
   border: 1px solid #31527a;
-  background: #10243f;
-  color: #bfdbfe;
+  background: #0a2340;
+  color: #b9dcf5;
   border-radius: 11px;
   padding: 10px 14px;
   font-weight: 800;
@@ -591,7 +591,7 @@ body.has-site-navigation {
 
 .export-note {
   margin-top: 8px;
-  color: #94a3b8;
+  color: #8faac7;
   font-size: 10px;
   line-height: 1.45;
 }
@@ -633,14 +633,14 @@ body.has-site-navigation {
 .signal-expand-icon {
   display: block;
   margin-top: 9px;
-  color: #60a5fa;
+  color: #58ceff;
   font-size: 13px;
   font-weight: 900;
   line-height: 1;
 }
 
 .signal-card.expanded .signal-head {
-  border-bottom: 1px solid #1e2d42;
+  border-bottom: 1px solid #214565;
 }
 
 .signal-card.expanded {
@@ -666,7 +666,7 @@ body.has-site-navigation {
 .why-signal-card {
   margin-top: 14px;
   padding-top: 12px;
-  border-top: 1px solid #1e2d42;
+  border-top: 1px solid #214565;
 }
 
 .why-signal-heading {
