@@ -89,8 +89,15 @@
             Signal Performance
           </h2>
         </div>
+
+        <button class="history-section-toggle"
+                type="button"
+                aria-expanded="false"
+                aria-controls="lifetimeStatsContent"
+                aria-label="Expand Lifetime Statistics">▼</button>
       </div>
 
+      <div id="lifetimeStatsContent" class="history-section-content history-section-collapsed">
       <div class="lifetime-stats-grid">
 
         <article class="summary-card">
@@ -158,7 +165,7 @@
         <br>
         Only fully closed candles that begin at or after the alert are evaluated. The candle already open when the alert arrives is excluded, so touches during that period may be missed.
       </div>
-
+      </div>
 
     </section>
 
@@ -177,17 +184,24 @@
           </h2>
         </div>
 
-        <button
+        <div class="history-heading-actions">
+          <button class="history-section-toggle"
+                  type="button"
+                  aria-expanded="false"
+                  aria-controls="historyFiltersContent"
+                  aria-label="Expand Filters">▼</button>
+
+          <button
           id="refreshHistory"
           class="refresh-button"
           type="button"
         >
           Refresh
-        </button>
-
+          </button>
+        </div>
       </div>
 
-
+      <div id="historyFiltersContent" class="history-section-content history-section-collapsed">
       <div class="filter-grid">
 
         <label>
@@ -304,6 +318,7 @@
       <div class="quality-note">
         Setup Quality % engine ka confluence score hai.
         Ye guaranteed win probability nahi hai.
+      </div>
       </div>
 
     </section>

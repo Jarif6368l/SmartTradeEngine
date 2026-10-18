@@ -2193,6 +2193,29 @@ body.classList.toggle(
   toggleCustomDates();
 
 
+
+  // Expand/collapse the Lifetime Statistics and Filters panels.
+  document.querySelectorAll(".history-section-toggle").forEach(button => {
+    button.addEventListener("click", () => {
+      const targetId = button.getAttribute("aria-controls");
+      const content = document.getElementById(targetId);
+      if (!content) return;
+
+      const willExpand = button.getAttribute("aria-expanded") !== "true";
+      button.setAttribute("aria-expanded", String(willExpand));
+      content.classList.toggle("history-section-collapsed", !willExpand);
+      button.textContent = willExpand ? "▲" : "▼";
+
+      const sectionName = targetId === "lifetimeStatsContent"
+        ? "Lifetime Statistics"
+        : "Filters";
+      button.setAttribute(
+        "aria-label",
+        `${willExpand ? "Collapse" : "Expand"} ${sectionName}`
+      );
+    });
+  });
+
   $("refreshHistory")
     .addEventListener(
       "click",
