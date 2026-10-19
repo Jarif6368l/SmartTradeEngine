@@ -239,6 +239,31 @@
       (stock ? "" : " × " + leverage + "x leverage") +
       ". Actual allocation: " + actualAllocPct.toFixed(2) + "%.";
 
+    // Informational account display; core allocation/P&L formulas unchanged.
+    const account = $("calcAccountType").value;
+    const contractSize = Number($("calcContractSize").value);
+    const minLot = Number($("calcMinLot").value);
+    const forexAccount = account === "mt5" || account === "xm";
+    $("calcContractSettings").style.display = forexAccount ? "" : "none";
+
+    if (forexAccount && Number.isFinite(contractSize) && contractSize > 0) {
+      const lots = quantity / contractSize;
+      $("calcLotSize").textContent = Number.isFinite(lots) ? lots.toFixed(6) : "--";
+      if (!Number.isFinite(minLot) || minLot <= 0) {
+        $("calcLotStatus").textContent = "Enter minimum lot";
+      } else if (lots > 0 && lots < minLot) {
+        $("calcLotStatus").textContent = "BELOW MINIMUM — verify broker";
+      } else {
+        $("calcLotStatus").textContent = "Estimate only — verify broker";
+      }
+    } else if (account === "delta") {
+      $("calcLotSize").textContent = "N/A";
+      $("calcLotStatus").textContent = "Check crypto contract specification";
+    } else {
+      $("calcLotSize").textContent = "N/A";
+      $("calcLotStatus").textContent = "Shares/units; verify F&O lot size";
+    }
+
     // -- result cards --
     $("calcAllocPct").textContent = finalAllocPct.toFixed(2) + "%";
     $("calcQuantity").textContent = fmtQty(quantity) + " units";
@@ -342,6 +367,19 @@
     if (saved && saved.capital !== undefined && saved.capital !== null && saved.capital !== "") {
       $("calcCapital").value = saved.capital;
     }
+    if (saved && saved.accountType) {
+      const option = $("calcAccountType").querySelector(
+        'option[value="' + saved.accountType + '"]'
+      );
+      if (option) $("calcAccountType").value = saved.accountType;
+    }
+    if (saved && saved.contractSize) {
+      $("calcContractSize").value = saved.contractSize;
+    }
+    if (saved && saved.minLot) {
+      $("calcMinLot").value = saved.minLot;
+    }
+
     // Restore leverage
     if (saved && saved.leverage !== undefined && saved.leverage !== null) {
       const lev = String(saved.leverage);
@@ -356,6 +394,18 @@
       }
     }
 
+    $("calcAccountType").addEventListener("change", () => {
+      writeSettings({ accountType: $("calcAccountType").value });
+      render();
+    });
+    $("calcContractSize").addEventListener("input", () => {
+      writeSettings({ contractSize: $("calcContractSize").value });
+      render();
+    });
+    $("calcMinLot").addEventListener("input", () => {
+      writeSettings({ minLot: $("calcMinLot").value });
+      render();
+    });
     $("calcTradeSelect").addEventListener("change", onTradeChange);
     $("calcCapital").addEventListener("input", () => {
       writeSettings({ capital: $("calcCapital").value });

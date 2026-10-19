@@ -18,6 +18,29 @@
   </header>
 
   <section class="card calc-card">
+    <div class="label">Trading Account</div>
+    <select id="calcAccountType" class="calc-select">
+      <option value="delta">Delta Exchange — Crypto</option>
+      <option value="mt5">MT5 — Forex</option>
+      <option value="xm">XM — Forex</option>
+      <option value="groww">Groww — India</option>
+      <option value="upstox">Upstox — India</option>
+    </select>
+    <div id="calcContractSettings">
+      <div class="calc-hint">Forex contract size (units per lot; verify broker)</div>
+      <input id="calcContractSize" class="calc-input" type="number"
+        min="1" step="1" value="100000" inputmode="numeric">
+      <div class="calc-hint">Minimum lot (verify exact symbol specification)</div>
+      <input id="calcMinLot" class="calc-input" type="number"
+        min="0.000001" step="any" value="0.01" inputmode="decimal">
+    </div>
+    <div class="calc-hint">
+      Forex defaults are examples only. Verify your exact account and symbol
+      specification before trading.
+    </div>
+  </section>
+
+  <section class="card calc-card">
     <div class="label">Capital</div>
     <div class="calc-input-row">
       <span id="calcCurrency" class="calc-currency">₹</span>
@@ -105,6 +128,14 @@
       <div class="calc-result-item">
         <span>Quantity</span>
         <strong id="calcQuantity">--</strong>
+      </div>
+      <div class="calc-result-item">
+        <span>Estimated Lot Size</span>
+        <strong id="calcLotSize">--</strong>
+      </div>
+      <div class="calc-result-item">
+        <span>Lot Status</span>
+        <strong id="calcLotStatus">--</strong>
       </div>
       <div class="calc-result-item">
         <span>Margin Required</span>
