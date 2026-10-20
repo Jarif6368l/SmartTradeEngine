@@ -1047,6 +1047,78 @@ class RiskEngine {
     r
   ) {
 
+    // Fail-safe stop-loss validation. Never tighten a structural SL artificially.
+    const rawMaxSlAtr = window.MAX_SL_ATR ?? 3;
+    const maxSlAtr = Number(rawMaxSlAtr);
+
+    const bullish = r.directionalContext.startsWith("BULLISH");
+    const bearish = r.directionalContext.startsWith("BEARISH");
+
+    const invalidConfig =
+      rawMaxSlAtr === "" ||
+      !Number.isFinite(maxSlAtr) ||
+      maxSlAtr <= 0;
+
+    const validPrices =
+      Number.isFinite(r.entryReference) &&
+      r.entryReference > 0 &&
+      Number.isFinite(r.stopLoss) &&
+      r.stopLoss > 0 &&
+      Number.isFinite(r.currentPrice) &&
+      r.currentPrice > 0;
+
+    const correctSlSide =
+      (bullish && r.stopLoss < r.entryReference) ||
+      (bearish && r.stopLoss > r.entryReference);
+
+    const calculatedDistance = bullish
+      ? r.entryReference - r.stopLoss
+      : bearish
+        ? r.stopLoss - r.entryReference
+        : NaN;
+
+    const validRiskDistance =
+      Number.isFinite(r.riskDistance) &&
+      r.riskDistance > 0 &&
+      Number.isFinite(calculatedDistance) &&
+      Math.abs(r.riskDistance - calculatedDistance) <=
+        Math.max(1e-10, Math.abs(calculatedDistance) * 1e-8);
+
+    const validAtr =
+      Number.isFinite(r.atr) && r.atr > 0;
+
+    const slAtrDistance =
+      validAtr && validRiskDistance
+        ? calculatedDistance / r.atr
+        : NaN;
+
+    let slValidationError = "";
+
+    if (invalidConfig) {
+      slValidationError = "Invalid MAX_SL_ATR configuration";
+    } else if (!bullish && !bearish) {
+      slValidationError = "No valid trade direction for Stop Loss validation";
+    } else if (!validPrices) {
+      slValidationError = "Entry or Stop Loss price is invalid";
+    } else if (!correctSlSide) {
+      slValidationError = "Stop Loss is on the wrong side of entry";
+    } else if (!validAtr) {
+      slValidationError = "ATR is invalid; Stop Loss distance cannot be validated";
+    } else if (!validRiskDistance) {
+      slValidationError = "Risk distance is invalid or inconsistent with entry and Stop Loss";
+    } else if (slAtrDistance > maxSlAtr) {
+      slValidationError =
+        `Stop Loss too wide: ${slAtrDistance.toFixed(2)} ATR exceeds ${maxSlAtr} ATR limit`;
+    }
+
+    if (slValidationError) {
+      r.decision = "SKIP";
+      r.entryStatus = "NO ENTRY — SKIP SETUP";
+      r.reason = slValidationError;
+      return;
+    }
+
+
     if (
       mtf.executionState
         .startsWith(
