@@ -3,20 +3,12 @@
   const pathname =
     location.pathname;
 
-  const onChart =
-    pathname.endsWith(
-      "/workspace.html"
-    );
-
   const onHistory =
     pathname.endsWith(
       "/history.html"
     );
 
-  const onCalculator =
-    pathname.endsWith(
-      "/calculator.html"
-    );
+
 
   const onAnalysis =
     pathname.endsWith(
@@ -37,16 +29,12 @@
 
   const symbol =
     document.getElementById(
-      onChart
-        ? "symbolInput"
-        : "symbol"
+      "symbol"
     );
 
   const exchange =
     document.getElementById(
-      onChart
-        ? "exchangeInput"
-        : "exchange"
+      "exchange"
     );
 
   const style =
@@ -114,11 +102,7 @@
       "M5 20V12M12 20V4M19 20V8"
     ],
 
-    [
-      "Calculator",
-      "/calculator.html",
-      "M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M16 15h0"
-    ],
+
 
     [
       "History",
@@ -126,11 +110,6 @@
       "M4 6h16M4 12h16M4 18h10"
     ],
 
-    [
-      "Chart",
-      "/workspace.html",
-      "M3 3v18h18M6 15l4-5 4 3 6-7"
-    ],
 
 
   ];
@@ -142,15 +121,9 @@
   if (onAnalysis) {
     activeLabel =
       "Analysis";
-  } else if (onCalculator) {
-    activeLabel =
-      "Calculator";
   } else if (onHistory) {
     activeLabel =
       "History";
-  } else if (onChart) {
-    activeLabel =
-      "Chart";
   }
 
 
@@ -257,12 +230,9 @@
   function syncLinks() {
 
     const mode =
-      onChart
-        ? query.get("mode") ||
-          "intraday"
-        : style?.value ||
-          query.get("mode") ||
-          "swing";
+      style?.value ||
+      query.get("mode") ||
+      "swing";
 
     const selection =
       new URLSearchParams();
@@ -297,15 +267,10 @@
       "/report.html?" +
       selection;
 
-    links[2].href =
-      "/calculator.html";
 
-    links[3].href =
+    links[2].href =
       "/history.html";
 
-    links[4].href =
-      "/workspace.html?" +
-      selection;
   }
 
 
@@ -336,16 +301,5 @@
   document.body.appendChild(
     nav
   );
-
-
-  /*
-   * Chart navigation remains hidden
-   * in the current mobile UI.
-   */
-  links[4].hidden =
-    true;
-
-  links[4].style.display =
-    "none";
 
 })();
