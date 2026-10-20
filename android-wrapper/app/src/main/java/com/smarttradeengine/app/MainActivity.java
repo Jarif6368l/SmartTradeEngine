@@ -18,7 +18,7 @@ public class MainActivity extends Activity {
         webView.setWebViewClient(new WebViewClient());
         setContentView(webView);
 
-        webView.loadUrl("http://127.0.0.1:3002/report.html");
+        webView.loadUrl("http://127.0.0.1:3000/report.html");
     }
 
     @Override
