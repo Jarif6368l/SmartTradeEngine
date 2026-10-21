@@ -3766,7 +3766,7 @@ async function scanMarket(
 
   const candidates = [];
 
-  for (const mode of MODES) {
+  for (const mode of ["intraday", "swing"]) {
 
     const analysis =
       analyzeMode(
@@ -5345,6 +5345,12 @@ function startTelegramTradeWatcher({
 
   const runUpstoxCycle =
     async () => {
+
+      // India scanning is disabled temporarily.
+      // Re-enable later by setting ENABLE_INDIA_SCANNING=true.
+      if (process.env.ENABLE_INDIA_SCANNING !== "true") {
+        return;
+      }
 
       let successful = 0;
 
