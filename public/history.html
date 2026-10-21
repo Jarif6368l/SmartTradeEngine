@@ -25,20 +25,6 @@
 
   <header class="history-topbar">
 
-    <div>
-      <div class="eyebrow">
-        AI TRADING ANALYST
-      </div>
-
-      <h1>
-        Signal History
-      </h1>
-
-      <p>
-        Real Telegram trade-candidate alerts ka complete record.
-      </p>
-    </div>
-
     <div
       id="historyConnection"
       class="status-badge"
@@ -51,31 +37,33 @@
 
   <main class="history-container">
 
+    <div class="overview-group">
+
     <section class="summary-grid">
 
       <article class="summary-card">
-        <span>Total Signals</span>
+        <span>TOTAL SIGNALS</span>
         <strong id="totalSignals">0</strong>
       </article>
 
       <article class="summary-card">
-        <span>Active</span>
+        <span>ACTIVE</span>
         <strong id="activeSignals">0</strong>
       </article>
 
       <article class="summary-card">
-        <span>Average Setup Quality</span>
+        <span>AVERAGE SETUP QUALITY</span>
         <strong id="averageQuality">--</strong>
       </article>
 
       <article class="summary-card">
-        <span>Last Signal</span>
+        <span>LAST SIGNAL</span>
         <strong id="latestSignal">--</strong>
       </article>
 
     </section>
 
-
+    </div>
 
     <section class="stats-panel">
 
@@ -86,7 +74,7 @@
           </div>
 
           <h2>
-            Signal Performance
+            SIGNAL PERFORMANCE
           </h2>
         </div>
 
@@ -94,65 +82,65 @@
                 type="button"
                 aria-expanded="false"
                 aria-controls="lifetimeStatsContent"
-                aria-label="Expand Lifetime Statistics">▼</button>
+                aria-label="EXPAND LIFETIME STATISTICS">▼</button>
       </div>
 
       <div id="lifetimeStatsContent" class="history-section-content history-section-collapsed">
       <div class="lifetime-stats-grid">
 
         <article class="summary-card">
-          <span>Lifetime Signals</span>
+          <span>LIFETIME SIGNALS</span>
           <strong id="statsTotal">0</strong>
         </article>
 
         <article class="summary-card">
-          <span>Active</span>
+          <span>ACTIVE</span>
           <strong id="statsActive">0</strong>
         </article>
 
         <article class="summary-card">
-          <span>T1 Touched</span>
+          <span>T1 TOUCHED</span>
           <strong id="statsT1">0</strong>
         </article>
 
         <article class="summary-card">
-          <span>T2 Hit</span>
+          <span>T2 HIT</span>
           <strong id="statsT2">0</strong>
         </article>
 
         <article class="summary-card">
-          <span>SL Hit</span>
+          <span>SL HIT</span>
           <strong id="statsSL">0</strong>
         </article>
 
         <article class="summary-card">
-          <span>Invalidated</span>
+          <span>INVALIDATED</span>
           <strong id="statsInvalidated">0</strong>
         </article>
 
         <article class="summary-card">
-          <span>Style Changed</span>
+          <span>STYLE CHANGED</span>
           <strong id="statsStyleChanged">0</strong>
         </article>
 
         <article class="summary-card">
-          <span>Ambiguous</span>
+          <span>AMBIGUOUS</span>
           <strong id="statsAmbiguous">0</strong>
         </article>
 
         <article class="summary-card">
-          <span>Average Max R</span>
+          <span>AVERAGE MAX R</span>
           <strong id="statsAverageMaxR">--</strong>
         </article>
 
         <article class="summary-card">
-          <span>Average Recorded R</span>
+          <span>AVERAGE RECORDED R</span>
           <strong id="statsAverageOutcomeR">--</strong>
           <small id="statsRecordedOutcomeCount">Recorded result count unavailable</small>
         </article>
 
         <article class="summary-card">
-          <span>Average Setup Quality</span>
+          <span>AVERAGE SETUP QUALITY</span>
           <strong id="statsAverageQuality">--</strong>
         </article>
 
@@ -169,7 +157,6 @@
 
     </section>
 
-
     <section class="history-panel">
 
       <div class="panel-heading">
@@ -180,7 +167,7 @@
           </div>
 
           <h2>
-            Trade Signal Records
+            TRADE SIGNAL RECORDS
           </h2>
         </div>
 
@@ -230,8 +217,8 @@
 
           <select id="statusFilter">
             <option value="">All Status</option>
-            <option value="ACTIVE">Active</option>
-            <option value="INACTIVE">Inactive</option>
+            <option value="ACTIVE">ACTIVE</option>
+            <option value="INACTIVE">INACTIVE</option>
           </select>
         </label>
 
@@ -243,11 +230,11 @@
             <option value="">All Outcomes</option>
             <option value="OPEN">Open</option>
             <option value="T1_HIT">T1 Hit</option>
-            <option value="T2_HIT">T2 Hit</option>
-            <option value="SL_HIT">SL Hit</option>
-            <option value="INVALIDATED">Invalidated</option>
-            <option value="STYLE_CHANGED">Style Changed</option>
-            <option value="AMBIGUOUS">Ambiguous</option>
+            <option value="T2_HIT">T2 HIT</option>
+            <option value="SL_HIT">SL HIT</option>
+            <option value="INVALIDATED">INVALIDATED</option>
+            <option value="STYLE_CHANGED">STYLE CHANGED</option>
+            <option value="AMBIGUOUS">AMBIGUOUS</option>
             <option value="EXPIRED">Expired</option>
           </select>
         </label>

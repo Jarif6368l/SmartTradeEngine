@@ -72,7 +72,7 @@
         hour12:
           true
       }
-    ).format(date) +
+    ).format(date).toUpperCase() +
       " IST";
   }
 
@@ -810,7 +810,7 @@
       row("ATR %", rk.atrPercent, "info"),
       row("Volatility", rk.volatility, "info"),
       row("Directional Context", rk.directionalContext, "gate"),
-      row("Setup Quality", rk.setupQuality, "info"),
+      row("SETUP QUALITY", rk.setupQuality, "info"),
       row("Risk Decision", rk.decision, "gate"),
       row("Risk Reason", rk.reason, "info")
     ]));
@@ -1053,7 +1053,7 @@ body.classList.toggle(
       make(
         "div",
         "signal-time",
-        "Signal Time: " +
+        "SIGNAL TIME: " +
           formatTime(
             row.sentAt
           )
@@ -1279,7 +1279,7 @@ body.classList.toggle(
       make(
         "span",
         "",
-        "Setup Quality"
+        "SETUP QUALITY"
       ),
 
       track,
@@ -1308,7 +1308,7 @@ body.classList.toggle(
       make(
         "summary",
         "",
-        "Signal ke piche poora logic dekhen"
+        "SIGNAL KE PICHE POORA LOGIC DEKHEN"
       )
     );
 
@@ -1327,7 +1327,7 @@ body.classList.toggle(
       ) +
       (
         row.styleReason
-          ? "\nReason: " +
+          ? "\nREASON: " +
             row.styleReason
           : ""
       )
@@ -1366,7 +1366,7 @@ body.classList.toggle(
       ) +
       (
         row.riskReason
-          ? "\nReason: " +
+          ? "\nREASON: " +
             row.riskReason
           : ""
       )
@@ -1432,15 +1432,15 @@ body.classList.toggle(
           (
             row.outcomeTimePrecision ===
               "CANDLE_CLOSE_APPROX"
-              ? "Inactive Time (Approx): "
-              : "Inactive Time: "
+              ? "INACTIVE TIME (APPROX): "
+              : "INACTIVE TIME: "
           ) +
             formatTime(
               row.closedAt
             ) +
             (
               row.closedReason
-                ? "\nReason: " +
+                ? "\nREASON: " +
                   row.closedReason
                 : ""
             )
@@ -1936,7 +1936,7 @@ body.classList.toggle(
       recordedCountElement.textContent =
         Number.isInteger(summary.recordedOutcomeCount)
           ? summary.recordedOutcomeCount + " of " +
-            summary.total + " signals have a recorded R"
+            summary.total + " SIGNALS HAVE A RECORDED R"
           : "Recorded result count unavailable";
     }
 
@@ -2194,7 +2194,7 @@ body.classList.toggle(
 
 
 
-  // Expand/collapse the Lifetime Statistics and Filters panels.
+  // Expand/collapse the LIFETIME STATISTICS and Filters panels.
   document.querySelectorAll(".history-section-toggle").forEach(button => {
     button.addEventListener("click", () => {
       const targetId = button.getAttribute("aria-controls");
@@ -2207,7 +2207,7 @@ body.classList.toggle(
       button.textContent = willExpand ? "▲" : "▼";
 
       const sectionName = targetId === "lifetimeStatsContent"
-        ? "Lifetime Statistics"
+        ? "LIFETIME STATISTICS"
         : "Filters";
       button.setAttribute(
         "aria-label",
@@ -2216,12 +2216,36 @@ body.classList.toggle(
     });
   });
 
-  $("refreshHistory")
-    .addEventListener(
-      "click",
-      loadHistory
-    );
+  // Mobile pull-to-refresh: reload history only when at page top.
+  let pullStartY = 0;
+  let pullStartX = 0;
+  let pullTracking = false;
+  let pullRefreshing = false;
 
+  document.addEventListener("touchstart", event => {
+    if (event.touches.length !== 1) return;
+    pullTracking = window.scrollY <= 2;
+    pullStartY = event.touches[0].clientY;
+    pullStartX = event.touches[0].clientX;
+  }, { passive: true });
+
+  document.addEventListener("touchend", event => {
+    if (!pullTracking || pullRefreshing || event.changedTouches.length !== 1) {
+      pullTracking = false;
+      return;
+    }
+
+    const deltaY = event.changedTouches[0].clientY - pullStartY;
+    const deltaX = Math.abs(event.changedTouches[0].clientX - pullStartX);
+    pullTracking = false;
+
+    if (deltaY < 90 || deltaX > deltaY * 0.7 || window.scrollY > 2) return;
+
+    pullRefreshing = true;
+    Promise.resolve(loadHistory()).finally(() => {
+      pullRefreshing = false;
+    });
+  }, { passive: true });
 
   loadHistory();
 

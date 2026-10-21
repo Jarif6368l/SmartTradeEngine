@@ -76,7 +76,7 @@ body.has-site-navigation {
 
 .summary-card {
   background: #051827;
-  border: 1px solid #214565;
+  border: 1px solid #2674C9;
   border-radius: 15px;
   padding: 14px;
 }
@@ -97,7 +97,7 @@ body.has-site-navigation {
 .history-panel,
 .signal-card {
   background: #051827;
-  border: 1px solid #214565;
+  border: 1px solid #2674C9;
   border-radius: 17px;
 }
 
@@ -257,6 +257,8 @@ body.has-site-navigation {
   background: #041628;
   border-radius: 11px;
   padding: 10px 11px;
+  border-bottom: 1px solid #1b3852;
+  box-shadow: inset 0 -1px 0 #ffffff03;
 }
 
 .data-box span {
@@ -885,22 +887,18 @@ body {
 .history-panel {
   border-color: var(--premium-border);
   background: linear-gradient(145deg, #10243a, #091727);
-  box-shadow: 0 12px 32px #00000030;
+  box-shadow: 0 8px 22px #00000025;
 }
 
 .history-topbar {
   position: relative;
   overflow: hidden;
+  justify-content: center;
 }
 
-.history-topbar::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #55d6ff, #818cf8, #4ade80, #fbbf24);
+.history-topbar .status-badge {
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .eyebrow,
@@ -931,7 +929,7 @@ body {
 }
 
 .summary-card:hover {
-  border-color: #4383a8;
+  border-color: #356783;
   transform: translateY(-2px);
 }
 
@@ -1188,4 +1186,112 @@ body {
   font-size: 14px;
   line-height: 1.5;
   overflow-wrap: anywhere;
+}
+
+/* LIVE HISTORY badge: green */
+.history-topbar .status-badge {
+  color: #4ade80;
+  border-color: #22c55e;
+  background: #052e16;
+}
+
+/* ONE SHARED BLUE BORDER AROUND THE FIVE OVERVIEW SECTIONS */
+.overview-group {
+  border: 1px solid #2674C9;
+  border-radius: 20px;
+  padding: 14px;
+  margin-bottom: 14px;
+  background: linear-gradient(145deg, #10243a, #091727);
+  box-shadow: 0 8px 22px #00000025;
+}
+
+.overview-group > .summary-grid {
+  margin-bottom: 14px;
+}
+
+.overview-group .summary-grid > .summary-card,
+.overview-group .stats-panel {
+  border: 0;
+}
+
+.overview-group .stats-panel {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+  margin-bottom: 0;
+}
+
+/* BRIGHT BLUE BORDER FOR FILTERS PANEL */
+.history-panel {
+  border: 1px solid #2674C9;
+}
+
+/* SEPARATE LIFETIME STATISTICS CARD */
+.stats-panel {
+  border: 1px solid #2674C9;
+  border-radius: 20px;
+  padding: 18px;
+  margin-bottom: 14px;
+  background: linear-gradient(145deg, #10243a, #091727);
+  box-shadow: 0 8px 22px #00000025;
+}
+
+/* REDUCE HISTORY TOP SPACE ON MOBILE */
+@media (max-width: 680px) {
+  .history-topbar {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+}
+
+
+/* HIDE REFRESH BUTTON — USE PULL TO REFRESH */
+.refresh-button {
+  display: none !important;
+}
+
+/* ALIGN SECTION ARROWS WITH HEADING TEXT */
+@media (max-width: 680px) {
+  .panel-heading {
+    align-items: center !important;
+  }
+
+  .history-heading-actions {
+    display: flex;
+    align-items: center;
+    align-self: center;
+    flex-shrink: 0;
+  }
+
+  .history-section-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    align-self: center;
+    vertical-align: middle;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    line-height: 1 !important;
+  }
+}
+
+/* KEEP SIGNAL STATUS AND EXPAND ARROW ON ONE LINE */
+.signal-status-wrap {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.signal-expand-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  line-height: 1;
 }

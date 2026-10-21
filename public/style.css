@@ -1406,7 +1406,7 @@ button:active {
   }
 
   .api-badge-group {
-    justify-content: flex-start !important;
+    justify-content: center !important;
     align-self: stretch;
 
     width: 100%;
