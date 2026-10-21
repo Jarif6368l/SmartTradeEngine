@@ -1048,16 +1048,8 @@ class RiskEngine {
   ) {
 
     // Fail-safe stop-loss validation. Never tighten a structural SL artificially.
-    const rawMaxSlAtr = window.MAX_SL_ATR ?? 3;
-    const maxSlAtr = Number(rawMaxSlAtr);
-
     const bullish = r.directionalContext.startsWith("BULLISH");
     const bearish = r.directionalContext.startsWith("BEARISH");
-
-    const invalidConfig =
-      rawMaxSlAtr === "" ||
-      !Number.isFinite(maxSlAtr) ||
-      maxSlAtr <= 0;
 
     const validPrices =
       Number.isFinite(r.entryReference) &&
@@ -1087,16 +1079,9 @@ class RiskEngine {
     const validAtr =
       Number.isFinite(r.atr) && r.atr > 0;
 
-    const slAtrDistance =
-      validAtr && validRiskDistance
-        ? calculatedDistance / r.atr
-        : NaN;
-
     let slValidationError = "";
 
-    if (invalidConfig) {
-      slValidationError = "Invalid MAX_SL_ATR configuration";
-    } else if (!bullish && !bearish) {
+    if (!bullish && !bearish) {
       slValidationError = "No valid trade direction for Stop Loss validation";
     } else if (!validPrices) {
       slValidationError = "Entry or Stop Loss price is invalid";
@@ -1106,9 +1091,6 @@ class RiskEngine {
       slValidationError = "ATR is invalid; Stop Loss distance cannot be validated";
     } else if (!validRiskDistance) {
       slValidationError = "Risk distance is invalid or inconsistent with entry and Stop Loss";
-    } else if (slAtrDistance > maxSlAtr) {
-      slValidationError =
-        `Stop Loss too wide: ${slAtrDistance.toFixed(2)} ATR exceeds ${maxSlAtr} ATR limit`;
     }
 
     if (slValidationError) {
