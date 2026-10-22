@@ -679,7 +679,8 @@ class ModeAnalysisEngine {
           : (
               Number.isFinite(
                 structure.support
-              )
+              ) &&
+              structure.support < price
                 ? structure.support
                 : price -
                   atr * 1.2
@@ -820,7 +821,8 @@ class ModeAnalysisEngine {
           : (
               Number.isFinite(
                 structure.resistance
-              )
+              ) &&
+              structure.resistance > price
                 ? structure.resistance
                 : price +
                   atr * 1.2

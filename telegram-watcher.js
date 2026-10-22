@@ -1042,6 +1042,10 @@ function normalizeCandles(raw) {
   raw.forEach(
     (c, index) => {
 
+      if (!c || typeof c !== "object" || Array.isArray(c)) {
+        return;
+      }
+
       const open =
         Number(c.open);
 
@@ -1066,6 +1070,14 @@ function normalizeCandles(raw) {
         c.time ??
         c.datetime ??
         c.timestamp;
+
+      if (
+        rawTime === undefined ||
+        rawTime === null ||
+        (typeof rawTime === "string" && rawTime.trim() === "")
+      ) {
+        return;
+      }
 
       let sortTime;
 
@@ -1092,6 +1104,7 @@ function normalizeCandles(raw) {
 
       if (
         !Number.isFinite(sortTime) ||
+        sortTime <= 0 ||
         !Number.isFinite(open) ||
         !Number.isFinite(high) ||
         !Number.isFinite(low) ||
@@ -1105,7 +1118,11 @@ function normalizeCandles(raw) {
         high <= 0 ||
         low <= 0 ||
         close <= 0 ||
-        high < low
+        high < low ||
+        high < open ||
+        high < close ||
+        low > open ||
+        low > close
       ) {
         return;
       }
@@ -1516,9 +1533,15 @@ function validCandidateLevels(analysis) {
 
   for (const field of fields) {
     const value = risk[field];
-    if (typeof value !== "number" && typeof value !== "string") return false;
-    if (String(value).trim() === "") return false;
-    if (!Number.isFinite(Number(value)) || Number(value) <= 0) return false;
+
+    if (
+      (typeof value !== "number" && typeof value !== "string") ||
+      String(value).trim() === "" ||
+      !Number.isFinite(Number(value)) ||
+      Number(value) <= 0
+    ) {
+      return false;
+    }
   }
 
   const low = Number(risk.entryLow);
@@ -1527,19 +1550,94 @@ function validCandidateLevels(analysis) {
   const stop = Number(risk.stopLoss);
   const t1 = Number(risk.target1);
   const t2 = Number(risk.target2);
+  const reportedRR1 = Number(risk.rr1);
+  const reportedRR2 = Number(risk.rr2);
 
-  if (low > high || entry < low || entry > high) return false;
+  if (
+    low > high ||
+    entry < low ||
+    entry > high
+  ) {
+    return false;
+  }
 
-  const direction = String(
-    analysis.style?.bias || risk.directionalContext || ""
-  ).toUpperCase();
-  const bullish = direction.includes("BULLISH");
-  const bearish = direction.includes("BEARISH");
-  if (bullish === bearish) return false;
+  const styleDirection = String(
+    analysis.style?.bias || ""
+  ).trim().toUpperCase();
 
-  return bullish
-    ? stop < low && t1 > high && t2 > t1
-    : stop > high && t1 < low && t2 < t1;
+  const riskDirection = String(
+    risk.directionalContext || ""
+  ).trim().toUpperCase();
+
+  // Do not accept malformed substring directions.
+  const styleBullish = styleDirection === "BULLISH";
+  const styleBearish = styleDirection === "BEARISH";
+  const riskBullish =
+    /^(BULLISH|BULLISH\s+—\s+UNCONFIRMED)$/.test(riskDirection);
+  const riskBearish =
+    /^(BEARISH|BEARISH\s+—\s+UNCONFIRMED)$/.test(riskDirection);
+
+  // Require explicit, unambiguous Style and Risk directions.
+  // Matching UNCONFIRMED directional labels remain valid.
+  if (
+    styleBullish === styleBearish ||
+    riskBullish === riskBearish ||
+    styleBullish !== riskBullish ||
+    styleBearish !== riskBearish
+  ) {
+    return false;
+  }
+
+  const bullish = styleBullish;
+  const bearish = styleBearish;
+
+  let riskDistance;
+  let actualRR1;
+  let actualRR2;
+
+  if (bullish) {
+    if (!(stop < low && t1 > high && t2 > t1)) {
+      return false;
+    }
+
+    riskDistance = entry - stop;
+    actualRR1 = (t1 - entry) / riskDistance;
+    actualRR2 = (t2 - entry) / riskDistance;
+  } else {
+    if (!(stop > high && t1 < low && t2 < t1)) {
+      return false;
+    }
+
+    riskDistance = stop - entry;
+    actualRR1 = (entry - t1) / riskDistance;
+    actualRR2 = (entry - t2) / riskDistance;
+  }
+
+  if (
+    !Number.isFinite(riskDistance) ||
+    riskDistance <= 0 ||
+    !Number.isFinite(actualRR1) ||
+    !Number.isFinite(actualRR2)
+  ) {
+    return false;
+  }
+
+  // Reject setups whose actual T1 reward/risk is below 1.5R.
+  if (actualRR1 < 1.5) {
+    return false;
+  }
+
+  // The ratios shown in Telegram must agree with the actual prices.
+  const rrTolerance = 0.03;
+
+  if (
+    Math.abs(reportedRR1 - actualRR1) > rrTolerance ||
+    Math.abs(reportedRR2 - actualRR2) > rrTolerance
+  ) {
+    return false;
+  }
+
+  return true;
 }
 
 function isTradeCandidate(analysis) {
@@ -2972,19 +3070,23 @@ function trackSignalOutcome(
       t1HitAt = record.t1HitAt;
     }
 
-    const high =
-      Number(
-        candle.high
-      );
-
-    const low =
-      Number(
-        candle.low
-      );
+    const open = Number(candle.open);
+    const high = Number(candle.high);
+    const low = Number(candle.low);
+    const close = Number(candle.close);
 
     if (
+      !Number.isFinite(open) ||
       !Number.isFinite(high) ||
-      !Number.isFinite(low)
+      !Number.isFinite(low) ||
+      !Number.isFinite(close) ||
+      open <= 0 || high <= 0 ||
+      low <= 0 || close <= 0 ||
+      high < low ||
+      high < open ||
+      high < close ||
+      low > open ||
+      low > close
     ) {
       continue;
     }
@@ -5727,10 +5829,10 @@ async function runEndToEndSelfTest() {
         99,
 
       target1:
-        102,
+        102.75,
 
       target2:
-        103,
+        104.25,
 
       rr1:
         1.5,
@@ -5842,8 +5944,21 @@ async function runEndToEndSelfTest() {
 
   try {
 
+    // Safety: self-test validates alert text locally; never sends Telegram messages.
+    const sendTelegram = async (text) => {
+      if (typeof text !== "string" || !text.trim()) {
+        throw new Error("Self-test alert formatting produced empty text");
+      }
+
+      console.log(
+        "[SELF-TEST] Alert text validated locally; Telegram delivery skipped."
+      );
+
+      return { message_id: null };
+    };
+
     console.log(
-      "SELF-TEST 1/7: Telegram..."
+      "SELF-TEST 1/7: Alert formatting (Telegram delivery disabled)..."
     );
 
     await sendTelegram(
@@ -5893,9 +6008,9 @@ async function runEndToEndSelfTest() {
           candle(
             2000,
             100.5,
-            102.2,
+            103,
             100.2,
-            102
+            102.9
           )
         ]
       },
@@ -5937,17 +6052,17 @@ async function runEndToEndSelfTest() {
           candle(
             2000,
             100.5,
-            102.2,
+            103,
             100.2,
-            102
+            102.9
           ),
 
           candle(
             4000,
             102,
-            103.2,
+            104.5,
             101.8,
-            103
+            104.3
           )
         ]
       },
@@ -6084,7 +6199,7 @@ async function runEndToEndSelfTest() {
     );
 
     console.log(
-      "Telegram ✅ History ✅ T1 ✅ T2 ✅ SL ✅ Statistics ✅ Export ✅"
+      "Alert formatting ✅ (Telegram delivery skipped) History ✅ T1 ✅ T2 ✅ SL ✅ Statistics ✅ Export ✅"
     );
 
     return true;

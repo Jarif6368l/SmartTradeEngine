@@ -875,6 +875,106 @@ function setupStyleAnalysisToggle() {
 }
 
 
+function validStylePlanCandidateLevels(analysis, risk) {
+  if (!analysis || !risk) return false;
+
+  const fields = [
+    "entryLow", "entryHigh", "entryReference",
+    "stopLoss", "target1", "target2", "rr1", "rr2"
+  ];
+  const n = {};
+
+  for (const field of fields) {
+    const value = risk[field];
+
+    if (
+      (typeof value !== "number" && typeof value !== "string") ||
+      String(value).trim() === "" ||
+      !Number.isFinite(Number(value)) ||
+      Number(value) <= 0
+    ) {
+      return false;
+    }
+
+    n[field] = Number(value);
+  }
+
+  const {
+    entryLow: low,
+    entryHigh: high,
+    entryReference: entry,
+    stopLoss: stop,
+    target1: t1,
+    target2: t2,
+    rr1: reportedRR1,
+    rr2: reportedRR2
+  } = n;
+
+  if (low > high || entry < low || entry > high) return false;
+
+  const styleDirection = String(analysis.bias || "").trim().toUpperCase();
+  const riskDirection = String(risk.directionalContext || "").trim().toUpperCase();
+
+  // Require canonical Style and Risk directions.
+  const styleBullish = styleDirection === "BULLISH";
+  const styleBearish = styleDirection === "BEARISH";
+  const riskBullish =
+    /^(BULLISH|BULLISH\s+—\s+UNCONFIRMED)$/.test(riskDirection);
+  const riskBearish =
+    /^(BEARISH|BEARISH\s+—\s+UNCONFIRMED)$/.test(riskDirection);
+
+  // Require one explicit Risk Engine direction matching Style.
+  // A matching UNCONFIRMED direction is still allowed.
+  if (
+    riskBullish === riskBearish ||
+    (styleBullish && !riskBullish) ||
+    (styleBearish && !riskBearish)
+  ) {
+    return false;
+  }
+
+  const bullish = styleBullish;
+  const bearish = styleBearish;
+
+  if (bullish === bearish) return false;
+
+  let riskDistance;
+  let actualRR1;
+  let actualRR2;
+
+  if (bullish) {
+    if (!(stop < low && t1 > high && t2 > t1)) return false;
+
+    riskDistance = entry - stop;
+    actualRR1 = (t1 - entry) / riskDistance;
+    actualRR2 = (t2 - entry) / riskDistance;
+  } else {
+    if (!(stop > high && t1 < low && t2 < t1)) return false;
+
+    riskDistance = stop - entry;
+    actualRR1 = (entry - t1) / riskDistance;
+    actualRR2 = (entry - t2) / riskDistance;
+  }
+
+  if (
+    !Number.isFinite(riskDistance) ||
+    riskDistance <= 0 ||
+    !Number.isFinite(actualRR1) ||
+    !Number.isFinite(actualRR2) ||
+    actualRR1 < 1.5
+  ) {
+    return false;
+  }
+
+  const tolerance = 0.03;
+
+  return (
+    Math.abs(reportedRR1 - actualRR1) <= tolerance &&
+    Math.abs(reportedRR2 - actualRR2) <= tolerance
+  );
+}
+
+
 function renderStyleAnalysisPlain(
   analysis,
   symbol,
@@ -906,13 +1006,17 @@ function renderStyleAnalysisPlain(
    * Only show a percentage when the final Risk Engine
    * has confirmed an actionable TRADE-CANDIDATE.
    */
+  const levelsValid =
+    validStylePlanCandidateLevels(analysis, risk);
+
   const tradeConfirmed =
-    plan &&
-    plan.status ===
-      "TRADE-CANDIDATE" &&
-    risk &&
-    risk.decision ===
-      "TRADE-CANDIDATE";
+    Boolean(
+      plan &&
+      plan.status === "TRADE-CANDIDATE" &&
+      risk &&
+      risk.decision === "TRADE-CANDIDATE" &&
+      levelsValid
+    );
 
   const confidence =
     tradeConfirmed &&
@@ -934,13 +1038,21 @@ function renderStyleAnalysisPlain(
           : "LOW — Trade avoid karo";
 
 
+  const displayStatus =
+    tradeConfirmed
+      ? "TRADE-CANDIDATE"
+      : plan.status === "TRADE-CANDIDATE"
+        ? !levelsValid
+          ? "WAIT — LEVEL VALIDATION FAILED"
+          : `WAIT — RISK ${risk?.decision || "NOT CONFIRMED"}`
+        : plan.status;
+
   state.textContent =
-    `${analysis.profile.label} • ${plan.status}`;
+    `${analysis.profile.label} • ${displayStatus}`;
 
 
   state.className =
-    plan.status ===
-      "TRADE-CANDIDATE"
+    tradeConfirmed
       ? trendClass(
           analysis.bias
         )
@@ -948,13 +1060,37 @@ function renderStyleAnalysisPlain(
 
 
   const price =
-    value =>
-      Number.isFinite(value)
+    value => {
+      const numeric = Number(value);
+
+      return (
+        value !== null &&
+        value !== undefined &&
+        String(value).trim() !== "" &&
+        Number.isFinite(numeric) &&
+        numeric > 0
+      )
         ? formatPrice(
-            value,
+            numeric,
             symbol
           )
         : "--";
+    };
+
+  const ratio =
+    value => {
+      const numeric = Number(value);
+
+      return (
+        value !== null &&
+        value !== undefined &&
+        String(value).trim() !== "" &&
+        Number.isFinite(numeric) &&
+        numeric > 0
+      )
+        ? "1 : " + numeric.toFixed(2)
+        : "--";
+    };
 
 
   let tradePlan =
@@ -965,45 +1101,36 @@ function renderStyleAnalysisPlain(
 
 
   if (
-    plan.active
+    plan.active &&
+    tradeConfirmed
   ) {
 
     tradePlan =
       `ENTRY ZONE: ${price(
-        plan.entryLow
+        risk.entryLow
       )} → ${price(
-        plan.entryHigh
+        risk.entryHigh
       )}\n` +
 
       `STOP LOSS: ${price(
-        plan.stop
+        risk.stopLoss
       )}\n` +
 
       `TARGET 1: ${price(
-        plan.target1
+        risk.target1
       )}\n` +
 
-      `R:R T1: ${
-        Number.isFinite(
-          plan.rr1
-        )
-          ? "1 : " +
-            plan.rr1.toFixed(2)
-          : "--"
-      }\n` +
+      `R:R T1: ${ratio(
+        risk.rr1
+      )}\n` +
 
       `TARGET 2: ${price(
-        plan.target2
+        risk.target2
       )}\n` +
 
-      `R:R T2: ${
-        Number.isFinite(
-          plan.rr2
-        )
-          ? "1 : " +
-            plan.rr2.toFixed(2)
-          : "--"
-      }`;
+      `R:R T2: ${ratio(
+        risk.rr2
+      )}`;
   }
 
 
@@ -1017,7 +1144,7 @@ function renderStyleAnalysisPlain(
     `${analysis.bias}\n\n` +
 
     `SETUP STATUS\n` +
-    `${plan.status}\n\n` +
+    `${displayStatus}\n\n` +
 
     `TRADE CONFIDENCE\n` +
     `${
@@ -1033,7 +1160,7 @@ function renderStyleAnalysisPlain(
     `NEXT CONDITION\n` +
     `${analysis.nextCondition}` +
     (
-      plan.active
+      plan.active && tradeConfirmed
         ? `\n\nTRADE PLAN\n${tradePlan}`
         : ""
     );
