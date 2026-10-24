@@ -880,7 +880,7 @@ function validStylePlanCandidateLevels(analysis, risk) {
 
   const fields = [
     "entryLow", "entryHigh", "entryReference",
-    "stopLoss", "target1", "target2", "rr1", "rr2"
+    "stopLoss", "target1", "target2", "rr1", "rr2", "riskReward"
   ];
   const n = {};
 
@@ -907,7 +907,8 @@ function validStylePlanCandidateLevels(analysis, risk) {
     target1: t1,
     target2: t2,
     rr1: reportedRR1,
-    rr2: reportedRR2
+    rr2: reportedRR2,
+    riskReward: reportedRiskReward
   } = n;
 
   if (low > high || entry < low || entry > high) return false;
@@ -961,7 +962,7 @@ function validStylePlanCandidateLevels(analysis, risk) {
     riskDistance <= 0 ||
     !Number.isFinite(actualRR1) ||
     !Number.isFinite(actualRR2) ||
-    actualRR1 < 1.5
+    actualRR1 < 1.5 - 1e-12
   ) {
     return false;
   }
@@ -970,7 +971,8 @@ function validStylePlanCandidateLevels(analysis, risk) {
 
   return (
     Math.abs(reportedRR1 - actualRR1) <= tolerance &&
-    Math.abs(reportedRR2 - actualRR2) <= tolerance
+    Math.abs(reportedRR2 - actualRR2) <= tolerance &&
+    Math.abs(reportedRiskReward - actualRR2) <= tolerance
   );
 }
 
@@ -1380,6 +1382,20 @@ function renderSmc(
 
 /* === WHY THIS SIGNAL WAS CONFIRMED — live render === */
 
+function isConfirmedWhySignalCandidate(analysis) {
+  const risk = analysis && analysis.risk;
+  const plan = analysis && analysis.style && analysis.style.plan;
+
+  return Boolean(
+    risk &&
+    plan &&
+    String(risk.decision || "").toUpperCase() === "TRADE-CANDIDATE" &&
+    plan.status === "TRADE-CANDIDATE" &&
+    validStylePlanCandidateLevels(analysis, risk)
+  );
+}
+
+
 function renderWhySignal(analysis, frames, mode, symbol) {
 
   const card = document.getElementById("whySignalCard");
@@ -1390,8 +1406,7 @@ function renderWhySignal(analysis, frames, mode, symbol) {
   // Dynamic title based on current analysis state.
   const riskDecision =
     (analysis && analysis.risk && analysis.risk.decision) || "WAIT";
-  const isConfirmed =
-    String(riskDecision).toUpperCase() === "TRADE-CANDIDATE";
+  const isConfirmed = isConfirmedWhySignalCandidate(analysis);
   const titleEl =
     heading.querySelector("h2");
   if (titleEl) {
@@ -1403,6 +1418,7 @@ function renderWhySignal(analysis, frames, mode, symbol) {
 
   // Build why object locally — same shape as watcher's buildSignalWhy
   let why = null;
+  let candidateLevelsValid = false;
   try {
     const execCandles =
       mode === "swing"
@@ -1418,6 +1434,7 @@ function renderWhySignal(analysis, frames, mode, symbol) {
       const mtf = analysis.mtf || {};
       const risk = analysis.risk || {};
       const style = analysis.style || {};
+      candidateLevelsValid = isConfirmedWhySignalCandidate(analysis);
       const reasoning = analysis.reasoning || {};
 
       const r4 = v => {
@@ -1513,7 +1530,7 @@ function renderWhySignal(analysis, frames, mode, symbol) {
             (style.plan && style.plan.status) ||
             sv(style.decision),
           riskDecision: sv(risk.decision),
-          candidateLevelValid: sv(risk.decision) === "TRADE-CANDIDATE",
+          candidateLevelValid: candidateLevelsValid,
           finalBias: sv(reasoning.finalBias),
           finalState: sv(reasoning.finalState),
           confidence: sv(reasoning.confidence),
@@ -1523,6 +1540,19 @@ function renderWhySignal(analysis, frames, mode, symbol) {
     }
   } catch (e) {
     why = { version: 1, error: "engine_rerun_failed" };
+  }
+
+  if (!candidateLevelsValid && why && why.risk) {
+    Object.assign(why.risk, {
+      entryLow: null,
+      entryHigh: null,
+      entryReference: null,
+      stopLoss: null,
+      target1: null,
+      target2: null,
+      rr1: null,
+      rr2: null
+    });
   }
 
   try {

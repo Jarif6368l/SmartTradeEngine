@@ -745,7 +745,8 @@ class ModeAnalysisEngine {
 
 
         if (
-          obstacleRR < 1.5
+          // Treat the exact 1.5R obstacle boundary as blocked; avoid floating-point boundary drift.
+          obstacleRR < 1.5 + 1e-12
         ) {
 
           plan.status =
@@ -887,7 +888,8 @@ class ModeAnalysisEngine {
 
 
         if (
-          obstacleRR < 1.5
+          // Treat the exact 1.5R obstacle boundary as blocked; avoid floating-point boundary drift.
+          obstacleRR < 1.5 + 1e-12
         ) {
 
           plan.status =
@@ -934,6 +936,21 @@ class ModeAnalysisEngine {
         risk;
     }
 
+
+    const targetsOrdered =
+      r.bias === "BULLISH"
+        ? plan.target2 > plan.target1
+        : r.bias === "BEARISH"
+          ? plan.target2 < plan.target1
+          : false;
+
+    if (!targetsOrdered) {
+      plan.active = false;
+      plan.status = "SKIP";
+      plan.reason =
+        "Second target must extend beyond first target";
+      return plan;
+    }
 
     plan.active =
       true;

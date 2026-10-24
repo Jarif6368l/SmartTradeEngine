@@ -1528,7 +1528,7 @@ function validCandidateLevels(analysis) {
 
   const fields = [
     "entryLow", "entryHigh", "entryReference",
-    "stopLoss", "target1", "target2", "rr1", "rr2"
+    "stopLoss", "target1", "target2", "rr1", "rr2", "riskReward"
   ];
 
   for (const field of fields) {
@@ -1552,6 +1552,7 @@ function validCandidateLevels(analysis) {
   const t2 = Number(risk.target2);
   const reportedRR1 = Number(risk.rr1);
   const reportedRR2 = Number(risk.rr2);
+  const reportedRiskReward = Number(risk.riskReward);
 
   if (
     low > high ||
@@ -1623,7 +1624,7 @@ function validCandidateLevels(analysis) {
   }
 
   // Reject setups whose actual T1 reward/risk is below 1.5R.
-  if (actualRR1 < 1.5) {
+  if (actualRR1 < 1.5 - 1e-12) {
     return false;
   }
 
@@ -1632,7 +1633,8 @@ function validCandidateLevels(analysis) {
 
   if (
     Math.abs(reportedRR1 - actualRR1) > rrTolerance ||
-    Math.abs(reportedRR2 - actualRR2) > rrTolerance
+    Math.abs(reportedRR2 - actualRR2) > rrTolerance ||
+    Math.abs(reportedRiskReward - actualRR2) > rrTolerance
   ) {
     return false;
   }
@@ -1766,6 +1768,13 @@ function buildAlert(
   mode,
   analysis
 ) {
+  if (!isTradeCandidate(analysis)) {
+    throw new Error(
+      `Refusing to build trade alert for ${market?.symbol || "unknown"}: candidate validation failed`
+    );
+  }
+
+
   const risk = analysis.risk || {};
   const direction =
     analysis.style?.bias ||
@@ -5384,7 +5393,7 @@ function startTelegramTradeWatcher({
 
           let found = null;
 
-          for (const mode of MODES) {
+          for (const mode of ["intraday", "swing"]) {
 
             let analysis;
 
@@ -5838,6 +5847,9 @@ async function runEndToEndSelfTest() {
         1.5,
 
       rr2:
+        2.5,
+
+      riskReward:
         2.5,
 
       volatility:

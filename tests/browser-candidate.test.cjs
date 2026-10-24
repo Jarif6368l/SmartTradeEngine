@@ -29,6 +29,7 @@ function bullish(overrides = {}) {
       target2: 105,
       rr1: 1.5,
       rr2: 2.5,
+      riskReward: 2.5,
       directionalContext: "BULLISH",
       ...overrides
     }
@@ -47,6 +48,7 @@ function bearish(overrides = {}) {
       target2: 95,
       rr1: 1.5,
       rr2: 2.5,
+      riskReward: 2.5,
       directionalContext: "BEARISH",
       ...overrides
     }
@@ -162,6 +164,17 @@ test("rejects reported R:R inconsistent with actual prices", () => {
   assert.equal(validate(b, b.risk), false);
 });
 
+test("rejects missing or inconsistent overall risk/reward", () => {
+  const missing = bullish({ riskReward: undefined });
+  assert.equal(validate(missing, missing.risk), false);
+
+  const bullishMismatch = bullish({ riskReward: 3 });
+  assert.equal(validate(bullishMismatch, bullishMismatch.risk), false);
+
+  const bearishMismatch = bearish({ riskReward: 1.5 });
+  assert.equal(validate(bearishMismatch, bearishMismatch.risk), false);
+});
+
 test("Style Plan details use the same validated display status", () => {
   assert.match(
     app,
@@ -181,4 +194,110 @@ test("candidate display gate requires validated levels", () => {
     app,
     /risk\.decision === "TRADE-CANDIDATE" &&\s*levelsValid/
   );
+});
+
+
+test("accepts mathematically 1.5R when floating-point subtraction is slightly low", () => {
+  const entry = 61.71967708970946;
+  const stop = 61.70918992627398;
+  const risk = entry - stop;
+  const target1 = 61.73540783486267;
+  const target2 = 61.745894998298155;
+  const rr2 = (target2 - entry) / risk;
+  const analysis = {
+    bias: "BULLISH",
+    risk: {
+      entryLow: entry - risk * 0.1,
+      entryHigh: entry + risk * 0.1,
+      entryReference: entry,
+      stopLoss: stop,
+      target1,
+      target2,
+      rr1: 1.5,
+      rr2,
+      riskReward: rr2,
+      directionalContext: "BULLISH"
+    }
+  };
+  assert.ok((target1 - entry) / risk < 1.5);
+  assert.equal(validate(analysis, analysis.risk), true);
+});
+
+test("rejects genuinely sub-1.5R levels beyond the numeric tolerance", () => {
+  const entry = 100;
+  const stop = 98;
+  const risk = entry - stop;
+  const target1 = entry + risk * (1.5 - 1e-9);
+  const target2 = entry + risk * 2.5;
+  const rr1 = (target1 - entry) / risk;
+  const rr2 = (target2 - entry) / risk;
+  const analysis = {
+    bias: "BULLISH",
+    risk: {
+      entryLow: 99.8,
+      entryHigh: 100.2,
+      entryReference: entry,
+      stopLoss: stop,
+      target1,
+      target2,
+      rr1,
+      rr2,
+      riskReward: rr2,
+      directionalContext: "BULLISH"
+    }
+  };
+  assert.equal(validate(analysis, analysis.risk), false);
+});
+
+
+test("accepts bearish mathematically 1.5R when floating-point subtraction is slightly low", () => {
+  const entry = 0.3003194018075712;
+  const stop = 0.32660350429266444;
+  const risk = stop - entry;
+  const target1 = 0.2608932480799314;
+  const target2 = entry - risk * 2.5;
+  const rr2 = (entry - target2) / risk;
+  const analysis = {
+    bias: "BEARISH",
+    risk: {
+      entryLow: entry - risk * 0.1,
+      entryHigh: entry + risk * 0.1,
+      entryReference: entry,
+      stopLoss: stop,
+      target1,
+      target2,
+      rr1: 1.5,
+      rr2,
+      riskReward: rr2,
+      directionalContext: "BEARISH"
+    }
+  };
+  assert.ok((entry - target1) / risk < 1.5);
+  assert.equal(validate(analysis, analysis.risk), true);
+});
+
+test("rejects genuinely bearish sub-1.5R levels beyond the numeric tolerance", () => {
+  const entry = 100;
+  const stop = 102;
+  const risk = stop - entry;
+  const target1 = entry - risk * (1.5 - 1e-9);
+  const target2 = entry - risk * 2.5;
+  const rr1 = (entry - target1) / risk;
+  const rr2 = (entry - target2) / risk;
+  const analysis = {
+    bias: "BEARISH",
+    risk: {
+      entryLow: 99.8,
+      entryHigh: 100.2,
+      entryReference: entry,
+      stopLoss: stop,
+      target1,
+      target2,
+      rr1,
+      rr2,
+      riskReward: rr2,
+      directionalContext: "BEARISH"
+    }
+  };
+  assert.equal(validate(analysis, analysis.risk), false);
 });
