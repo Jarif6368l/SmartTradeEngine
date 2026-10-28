@@ -2248,27 +2248,64 @@ body.classList.toggle(
 
 })();
 
-/* === LEFT NOTIFICATION PANEL === */
+
+
+/* === SLIDE-OUT NOTIFICATION PANEL === */
 async function loadNotifications() {
   try {
     const r = await fetch('/api/notifications');
     const data = await r.json();
-    if (!data.ok) return;
     const list = document.getElementById('leftNotifyList');
     if (!list) return;
-    if (data.notifications.length === 0) {
-      list.innerHTML = '<div style="color:#8faac7;font-size:11px;padding:8px;">No new signals yet.</div>';
+    
+    if (!data.ok || data.notifications.length === 0) {
+      list.innerHTML = '<div style="color:#8faac7;font-size:14px;padding:10px;">No new signals yet.</div>';
       return;
     }
+    
     list.innerHTML = data.notifications.map(n => {
       let cls = 'neutral';
       if (n.text.includes('BULLISH')) cls = 'bullish';
       if (n.text.includes('BEARISH')) cls = 'bearish';
       const time = new Date(n.time).toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
-      const shortText = n.text.replace(/🚨 NEW TRADE SETUP\\n\\n/g, '').split('\\n').slice(0,4).join('<br>');
-      return `<div class="notify-item ${cls}">${shortText}<div class="notify-time">${time}</div></div>`;
+      
+      // Extract title (e.g., BTC/USD • Intraday)
+      const lines = n.text.split('\n');
+      const title = lines[3] || 'New Signal';
+      const direction = lines[4] || '';
+      
+      return `
+        <div class="notify-item ${cls}">
+          <strong>${title}</strong><br>
+          ${direction}
+          <div class="notify-time">${time}</div>
+        </div>
+      `;
     }).join('');
-  } catch (e) {}
+  } catch (e) {
+    console.error(e);
+  }
 }
-loadNotifications();
-setInterval(loadNotifications, 15000); // refresh every 15 sec
+
+// Panel open/close logic
+document.addEventListener('DOMContentLoaded', () => {
+  const panel = document.getElementById('leftNotificationPanel');
+  const openBtn = document.getElementById('openNotifyBtn');
+  const closeBtn = document.getElementById('closeNotifyBtn');
+
+  if (openBtn && panel) {
+    openBtn.addEventListener('click', () => {
+      panel.classList.add('active');
+      loadNotifications(); // Refresh on open
+    });
+  }
+
+  if (closeBtn && panel) {
+    closeBtn.addEventListener('click', () => {
+      panel.classList.remove('active');
+    });
+  }
+
+  loadNotifications();
+  setInterval(loadNotifications, 30000); // auto-refresh every 30s
+});
