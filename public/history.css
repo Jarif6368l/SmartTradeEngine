@@ -1,61 +1,78 @@
-/* --- PURANA PANEL HATAO --- */
-.left-notification-panel {
-  position: fixed !important;
-  top: 0;
-  left: -100%; /* Default: Screen ke bahar */
-  width: 100%; /* Pura screen cover karega */
-  max-width: 400px;
-  height: 100vh;
-  background: #051827;
-  z-index: 9999;
-  transition: left 0.3s ease-in-out;
-  border-right: 1px solid #214565;
-  padding: 20px;
-  overflow-y: auto;
-  box-shadow: 5px 0 25px rgba(0,0,0,0.5);
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body { background: #020d1a; color: #eef6ff; font-family: Arial, sans-serif; }
+body.has-site-navigation { padding-bottom: 92px; }
+
+.history-topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; padding: 22px 18px 14px; max-width: 980px; margin: 0 auto; }
+.eyebrow, .section-label { color: #58ceff; font-size: 11px; font-weight: 800; letter-spacing: .12em; }
+.status-badge { border: 1px solid #23344b; background: #051827; color: #b9dcf5; padding: 8px 11px; border-radius: 999px; font-size: 12px; white-space: nowrap; }
+
+.history-container { width: 100%; max-width: 980px; padding: 8px 18px 40px; margin: 0 auto; }
+.summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+.summary-card { background: #051827; border: 1px solid #2674C9; border-radius: 15px; padding: 14px; }
+.summary-card span { display: block; color: #8faac7; font-size: 11px; margin-bottom: 7px; }
+.summary-card strong { display: block; font-size: 19px; line-height: 1.25; }
+
+.history-panel, .signal-card { background: #051827; border: 1px solid #2674C9; border-radius: 17px; }
+.history-panel { padding: 15px; margin-bottom: 14px; }
+.panel-heading { display: flex; justify-content: space-between; align-items: center; gap: 14px; }
+.panel-heading h2 { margin: 5px 0 0; font-size: 19px; }
+.refresh-button { border: 1px solid #28405d; background: #101f33; color: #eef6ff; padding: 9px 13px; border-radius: 11px; font-weight: 700; }
+
+.filter-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+.filter-grid label span { display: block; margin-bottom: 6px; color: #8faac7; font-size: 11px; }
+.filter-grid select { width: 100%; border: 1px solid #23344b; background: #041628; color: #eef6ff; border-radius: 10px; padding: 10px; outline: none; }
+
+.history-list { display: grid; gap: 12px; }
+.signal-card { overflow: hidden; }
+.signal-head { display: flex; justify-content: space-between; gap: 12px; padding: 15px; border-bottom: 1px solid #214565; }
+.signal-pair { font-size: 20px; font-weight: 800; }
+.signal-sub { margin-top: 5px; color: #8faac7; font-size: 12px; }
+
+.signal-status, .direction-pill, .style-pill { display: inline-block; border-radius: 999px; padding: 5px 8px; font-size: 10px; font-weight: 800; letter-spacing: .05em; }
+.signal-status.active { background: #0a2c1a; color: #7ee2a8; }
+.signal-status.inactive { background: #051827; color: #a5b8ce; }
+.direction-pill.bullish { background: #0a2c1a; color: #7ee2a8; }
+.direction-pill.bearish { background: #3a0f1a; color: #ff97a8; }
+.style-pill { background: #0a2340; color: #7fc4ff; margin-left: 5px; }
+
+.signal-body { padding: 15px; }
+.signal-time { color: #b9dcf5; font-size: 12px; margin-bottom: 13px; }
+.trade-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.data-box { background: #041628; border-radius: 11px; padding: 10px 11px; border-bottom: 1px solid #1b3852; }
+.data-box span { display: block; color: #8faac7; font-size: 10px; margin-bottom: 5px; }
+.data-box strong { display: block; font-size: 14px; overflow-wrap: anywhere; }
+
+.logic-details { margin-top: 14px; border-top: 1px solid #214565; padding-top: 12px; }
+.logic-details summary { cursor: pointer; color: #b9dcf5; font-weight: 700; }
+.logic-grid { display: grid; gap: 9px; margin-top: 12px; }
+.logic-box { background: #041628; border-radius: 11px; padding: 11px; }
+.logic-box span { display: block; color: #58ceff; font-size: 10px; font-weight: 800; margin-bottom: 6px; letter-spacing: .06em; }
+.logic-box pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; color: #eaf6ff; font-family: inherit; font-size: 12px; line-height: 1.55; }
+
+.empty-state { text-align: center; background: #051827; border: 1px solid #214565; border-radius: 16px; padding: 34px 16px; color: #8faac7; }
+
+@media(max-width: 700px) {
+  .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .filter-grid { grid-template-columns: 1fr; }
 }
 
-/* Jab open ho */
-.left-notification-panel.active {
-  left: 0 !important;
-}
+.hidden { display: none !important; }
+.signal-body-collapsed { display: none; }
+.signal-head { cursor: pointer; }
+.signal-expand-icon { display: block; margin-top: 9px; color: #58ceff; font-size: 13px; font-weight: 900; }
 
-/* Default body margin reset */
-body {
-  margin-left: 0 !important;
-}
+.outcome-pill { display: inline-block; border-radius: 999px; padding: 5px 8px; margin-left: 5px; font-size: 10px; font-weight: 800; }
+.outcome-open { background: #0a2340; color: #7fc4ff; }
+.outcome-t1 { background: #0a2c1a; color: #7ee2a8; }
+.outcome-t2 { background: #0a2c1a; color: #7ee2a8; }
+.outcome-sl { background: #3a0f1a; color: #ff97a8; }
+.outcome-ambiguous { background: #052b46; color: #ffd05a; }
 
-/* Band karne ka arrow button */
-.close-notify-btn {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  background: #0a2340;
-  color: #58ceff;
-  border: 1px solid #214565;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-weight: bold;
-  cursor: pointer;
-  font-size: 16px;
-}
+.stats-panel { background: #051827; border: 1px solid #214565; border-radius: 17px; padding: 15px; margin-bottom: 14px; }
+.lifetime-stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
+.statistics-note { margin-top: 12px; color: #8faac7; font-size: 11px; line-height: 1.5; }
 
-/* Naya button jo page par dikhega */
-.open-notify-btn {
-  position: fixed;
-  bottom: 90px; /* Bottom nav ke upar */
-  right: 20px;
-  background: #2962ff;
-  color: white;
-  border: none;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  font-size: 24px;
-  box-shadow: 0 4px 15px rgba(41, 98, 255, 0.4);
-  z-index: 9998;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+@media (max-width: 720px) {
+  .lifetime-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
