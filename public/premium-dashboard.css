@@ -1002,3 +1002,27 @@ body.has-site-navigation .container {
     calc(82px + env(safe-area-inset-bottom));
 }
 
+
+/* Fix for WHY Signal card on Report Page */
+.why-signal-body {
+  transition: max-height 0.3s ease, opacity 0.25s ease, margin-top 0.25s ease;
+  overflow: hidden;
+  max-height: 5000px;
+  opacity: 1;
+}
+.why-signal-body.why-signal-collapsed {
+  max-height: 0 !important;
+  opacity: 0 !important;
+  margin-top: 0 !important;
+  pointer-events: none !important;
+}
+.why-signal-heading {
+  cursor: pointer;
+}
+.why-signal-arrow {
+  transition: transform 0.25s ease;
+  display: inline-block;
+}
+.why-signal-heading[aria-expanded="true"] .why-signal-arrow {
+  transform: rotate(180deg);
+}
