@@ -4456,7 +4456,7 @@ function startTelegramTradeWatcher({
     ).trim();
 
   if (!token || !chatId) {
-    console.log("[Scanner] Running WITHOUT Telegram. Scanning will continue and data will be saved to History.");
+    console.log("[Scanner] Bot engine started successfully. Monitoring markets and saving signals to History.");
   } else {
     console.log("[Scanner] Telegram alerts are ENABLED.");
   }
