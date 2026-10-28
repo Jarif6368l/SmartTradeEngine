@@ -1977,87 +1977,29 @@ async function fetchWithTimeout(
 }
 
 
-async function sendTelegram(
-  text
-) {
 
-  const token =
-    String(
-      process.env
-        .TELEGRAM_BOT_TOKEN ||
-      ""
-    ).trim();
-
-  const chatId =
-    String(
-      process.env
-        .TELEGRAM_CHAT_ID ||
-      ""
-    ).trim();
-
-  if (
-    !token ||
-    !chatId
-  ) {
-
-    throw new Error(
-      "Telegram credentials missing"
-    );
-  }
-
-  const configuredTimeout =
-    Number(
-      process.env
-        .TELEGRAM_SEND_TIMEOUT_MS
-    );
-
-
-  const timeoutMs =
-    Number.isFinite(
-      configuredTimeout
-    ) &&
-    configuredTimeout > 0
-      ? configuredTimeout
-      : 12000;
-
-
-  const {
-    data
-  } =
-    await fetchWithTimeout(
-      fetch,
-      `https://api.telegram.org/bot${token}/sendMessage`,
-      {
-        method:
-          "POST",
-
-        headers: {
-          "content-type":
-            "application/x-www-form-urlencoded"
-        },
-
-        body:
-          new URLSearchParams({
-            chat_id:
-              chatId,
-
-            text
-          })
-      },
-      timeoutMs
-    );
-
-  if (!data.ok) {
-
-    throw new Error(
-      data.description ||
-      "Telegram send failed"
-    );
-  }
-
-  return data.result || null;
+async function sendTelegram(text) {
+  // Save to local notification file instead of Telegram
+  const file = '.notifications.json';
+  let history = [];
+  try {
+    if (fs.existsSync(file)) {
+      history = JSON.parse(fs.readFileSync(file, 'utf8'));
+    }
+  } catch (e) {}
+  
+  history.unshift({
+    id: Date.now(),
+    time: new Date().toISOString(),
+    text: text
+  });
+  
+  // Keep only last 50 notifications
+  history = history.slice(0, 50);
+  fs.writeFileSync(file, JSON.stringify(history, null, 2));
+  console.log('[Local Notify] New signal saved to .notifications.json');
+  return { message_id: Date.now() };
 }
-
 
 
 /* === SL HIT REASON: factual reason derivation from existing stored data ===

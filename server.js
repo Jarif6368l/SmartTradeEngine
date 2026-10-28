@@ -13423,6 +13423,20 @@ app.get(
 
 
 
+
+app.get('/api/notifications', (req, res) => {
+  try {
+    const file = path.join(__dirname, '.notifications.json');
+    if (fs.existsSync(file)) {
+      const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+      return res.json({ ok: true, notifications: data });
+    }
+    res.json({ ok: true, notifications: [] });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 // Read-only signal history API.
 app.get("/api/signal-history/export", (req, res) => {
   try {

@@ -2247,3 +2247,28 @@ body.classList.toggle(
   );
 
 })();
+
+/* === LEFT NOTIFICATION PANEL === */
+async function loadNotifications() {
+  try {
+    const r = await fetch('/api/notifications');
+    const data = await r.json();
+    if (!data.ok) return;
+    const list = document.getElementById('leftNotifyList');
+    if (!list) return;
+    if (data.notifications.length === 0) {
+      list.innerHTML = '<div style="color:#8faac7;font-size:11px;padding:8px;">No new signals yet.</div>';
+      return;
+    }
+    list.innerHTML = data.notifications.map(n => {
+      let cls = 'neutral';
+      if (n.text.includes('BULLISH')) cls = 'bullish';
+      if (n.text.includes('BEARISH')) cls = 'bearish';
+      const time = new Date(n.time).toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'});
+      const shortText = n.text.replace(/🚨 NEW TRADE SETUP\\n\\n/g, '').split('\\n').slice(0,4).join('<br>');
+      return `<div class="notify-item ${cls}">${shortText}<div class="notify-time">${time}</div></div>`;
+    }).join('');
+  } catch (e) {}
+}
+loadNotifications();
+setInterval(loadNotifications, 15000); // refresh every 15 sec

@@ -1302,3 +1302,54 @@ body {
   margin-top: 0 !important;
   pointer-events: none !important;
 }
+
+/* LEFT NOTIFICATION PANEL */
+.left-notification-panel {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 260px;
+  background: #051827;
+  border-right: 1px solid #214565;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  overflow-y: auto;
+}
+.left-notify-head {
+  color: #58ceff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  margin-bottom: 10px;
+  padding: 10px 5px;
+  border-bottom: 1px solid #214565;
+}
+.left-notify-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.notify-item {
+  background: #0a2340;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 12px;
+  color: #eaf6ff;
+  line-height: 1.5;
+  border-left: 3px solid #58ceff;
+}
+.notify-item.bearish { border-left-color: #ff5566; }
+.notify-item.bullish { border-left-color: #25e6ad; }
+.notify-time {
+  font-size: 10px;
+  color: #8faac7;
+  margin-top: 5px;
+}
+body { margin-left: 260px !important; }
+@media (max-width: 700px) {
+  .left-notification-panel { width: 100%; max-width: 260px; box-shadow: 2px 0 10px rgba(0,0,0,0.5); }
+  body { margin-left: 0 !important; }
+}
