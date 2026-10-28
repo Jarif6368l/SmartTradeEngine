@@ -3877,7 +3877,7 @@ async function scanMarket(
 
   const candidates = [];
 
-  for (const mode of ["intraday", "swing"]) {
+  for (const mode of ["scalping", "intraday", "swing"]) {
 
     const analysis =
       analyzeMode(
@@ -5393,7 +5393,7 @@ function startTelegramTradeWatcher({
 
           let found = null;
 
-          for (const mode of ["intraday", "swing"]) {
+          for (const mode of ["scalping", "intraday", "swing"]) {
 
             let analysis;
 
