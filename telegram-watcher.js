@@ -799,7 +799,7 @@ function readStateFromPaths(
       if (logRecovery) {
 
         console.warn(
-          "[Telegram Watcher] Primary state unavailable/corrupt • recovered previous state"
+          "[Scanner] Primary state unavailable/corrupt • recovered previous state"
         );
       }
 
@@ -1024,7 +1024,7 @@ function saveState() {
   } catch (error) {
 
     console.error(
-      "[Telegram Watcher] State save failed:",
+      "[Scanner] State save failed:",
       error.message
     );
   }
@@ -1277,7 +1277,7 @@ async function maybeNotifyBudgetExhausted() {
       await sendTelegram(text);
     } catch (e) {
       console.error(
-        "[Telegram Watcher] Budget exhaustion alert failed:",
+        "[Scanner] Budget exhaustion alert failed:",
         e.message
       );
       /* Do not mark as sent — allow retry on next tick same day */
@@ -1293,7 +1293,7 @@ async function maybeNotifyBudgetExhausted() {
     saveState();
 
     console.log(
-      "[Telegram Watcher] Budget exhaustion alert sent for " +
+      "[Scanner] Budget exhaustion alert sent for " +
       today +
       " (" +
       watcherState.watcherCredits +
@@ -1304,7 +1304,7 @@ async function maybeNotifyBudgetExhausted() {
 
   } catch (error) {
     console.error(
-      "[Telegram Watcher] maybeNotifyBudgetExhausted error:",
+      "[Scanner] maybeNotifyBudgetExhausted error:",
       error.message
     );
   }
@@ -3788,13 +3788,13 @@ async function scanMarket(
         };
 
         console.log(
-          `[Telegram Watcher] ${market.symbol} pending ${pendingOutcome} Telegram alert sent • message_id=${telegramResult?.message_id ?? "unknown"}`
+          `[Scanner] ${market.symbol} pending ${pendingOutcome} Telegram alert sent • message_id=${telegramResult?.message_id ?? "unknown"}`
         );
 
       } catch (error) {
 
         console.error(
-          `[Telegram Watcher] ${market.symbol} pending ${pendingOutcome} Telegram retry failed:`,
+          `[Scanner] ${market.symbol} pending ${pendingOutcome} Telegram retry failed:`,
           error.message
         );
       }
@@ -3957,13 +3957,13 @@ async function scanMarket(
       };
 
       console.log(
-        `[Telegram Watcher] ${market.symbol} ${currentOutcome} Telegram alert sent • message_id=${telegramResult?.message_id ?? "unknown"}`
+        `[Scanner] ${market.symbol} ${currentOutcome} Telegram alert sent • message_id=${telegramResult?.message_id ?? "unknown"}`
       );
 
     } catch (error) {
 
       console.error(
-        `[Telegram Watcher] ${market.symbol} outcome Telegram failed:`,
+        `[Scanner] ${market.symbol} outcome Telegram failed:`,
         error.message
       );
     }
@@ -4049,7 +4049,7 @@ async function scanMarket(
 
 
     console.log(
-      `[Telegram Watcher] ${market.symbol} ${outcomeRecord.outcome} • waiting for setup reset before re-arm`
+      `[Scanner] ${market.symbol} ${outcomeRecord.outcome} • waiting for setup reset before re-arm`
     );
 
     return;
@@ -4087,7 +4087,7 @@ async function scanMarket(
 
 
       console.log(
-        `[Telegram Watcher] ${market.symbol} setup reset confirmed • pair re-armed`
+        `[Scanner] ${market.symbol} setup reset confirmed • pair re-armed`
       );
 
       return;
@@ -4121,7 +4121,7 @@ async function scanMarket(
 
 
       console.log(
-        `[Telegram Watcher] ${market.symbol} existing trade still open • waiting for T2 / SL outcome`
+        `[Scanner] ${market.symbol} existing trade still open • waiting for T2 / SL outcome`
       );
 
       return;
@@ -4218,7 +4218,7 @@ async function scanMarket(
   ) {
 
     console.log(
-      `[Telegram Watcher] ${market.symbol} new setup/style ignored • existing trade still open until T2 / SL`
+      `[Scanner] ${market.symbol} new setup/style ignored • existing trade still open until T2 / SL`
     );
 
     return;
@@ -4278,7 +4278,7 @@ async function scanMarket(
 
 
     console.log(
-      `[Telegram Watcher] NEW SETUP ${market.symbol} ${strongest.mode} • material Entry/SL/Target change • quality ${strongest.quality}`
+      `[Scanner] NEW SETUP ${market.symbol} ${strongest.mode} • material Entry/SL/Target change • quality ${strongest.quality}`
     );
 
 
@@ -4343,7 +4343,7 @@ async function scanMarket(
 
 
     console.log(
-      `[Telegram Watcher] STYLE CHANGE ALERT ${market.symbol} ${previous.mode} -> ${strongest.mode} • quality ${strongest.quality}`
+      `[Scanner] STYLE CHANGE ALERT ${market.symbol} ${previous.mode} -> ${strongest.mode} • quality ${strongest.quality}`
     );
 
   } else if (
@@ -4379,7 +4379,7 @@ async function scanMarket(
 
 
     console.log(
-      `[Telegram Watcher] STRONGEST ALERT ${market.symbol} ${strongest.mode} • quality ${strongest.quality}`
+      `[Scanner] STRONGEST ALERT ${market.symbol} ${strongest.mode} • quality ${strongest.quality}`
     );
   }
 
@@ -4456,9 +4456,9 @@ function startTelegramTradeWatcher({
     ).trim();
 
   if (!token || !chatId) {
-    console.log("[Telegram Watcher] Running WITHOUT Telegram. Scanning will continue and data will be saved to History.");
+    console.log("[Scanner] Running WITHOUT Telegram. Scanning will continue and data will be saved to History.");
   } else {
-    console.log("[Telegram Watcher] Telegram alerts are ENABLED.");
+    console.log("[Scanner] Telegram alerts are ENABLED.");
   }
 
   if (
@@ -4467,7 +4467,7 @@ function startTelegramTradeWatcher({
   ) {
 
     console.log(
-      "[Telegram Watcher] Disabled — candle fetch function unavailable"
+      "[Scanner] Disabled — candle fetch function unavailable"
     );
 
     return;
@@ -4478,7 +4478,7 @@ function startTelegramTradeWatcher({
 
 
   console.log(
-    `[Telegram Watcher] Ready — ${WATCH_MARKETS.length} pairs • 3 styles • ${DAILY_CREDIT_BUDGET} credit/day watcher budget`
+    `[Scanner] Ready — ${WATCH_MARKETS.length} pairs • 3 styles • ${DAILY_CREDIT_BUDGET} credit/day watcher budget`
   );
 
 
@@ -4540,7 +4540,7 @@ function startTelegramTradeWatcher({
       } catch (e) {
 
         console.error(
-          "[Telegram Watcher] recordSuccessfulScan failed:",
+          "[Scanner] recordSuccessfulScan failed:",
           e.message
         );
       }
@@ -4556,7 +4556,7 @@ function startTelegramTradeWatcher({
       try {
 
         console.log(
-          `[Telegram Watcher] Scan ${market.symbol}${market.exchange ? ` • ${market.exchange}` : ""}`
+          `[Scanner] Scan ${market.symbol}${market.exchange ? ` • ${market.exchange}` : ""}`
         );
 
         await scanMarket(
@@ -4573,7 +4573,7 @@ function startTelegramTradeWatcher({
       } catch (error) {
 
         console.error(
-          `[Telegram Watcher] ${market.symbol}${market.exchange ? ` • ${market.exchange}` : ""} failed:`,
+          `[Scanner] ${market.symbol}${market.exchange ? ` • ${market.exchange}` : ""} failed:`,
           error.message
         );
 
@@ -5176,11 +5176,11 @@ function startTelegramTradeWatcher({
         try {
           await sendTelegram(reportText);
           console.log(
-            "[Telegram Watcher] OFFLINE RECOVERY REPORT sent"
+            "[Scanner] OFFLINE RECOVERY REPORT sent"
           );
         } catch (e) {
           console.error(
-            "[Telegram Watcher] recovery report send failed:",
+            "[Scanner] recovery report send failed:",
             e.message
           );
         }
@@ -5230,7 +5230,7 @@ function startTelegramTradeWatcher({
       } catch (error) {
 
         console.error(
-          "[Telegram Watcher] recovery failed:",
+          "[Scanner] recovery failed:",
           error.message
         );
 
@@ -5402,7 +5402,7 @@ function startTelegramTradeWatcher({
       let successful = 0;
 
       console.log(
-        `[Telegram Watcher] India full scan started — ${upstoxMarkets.length} markets`
+        `[Scanner] India full scan started — ${upstoxMarkets.length} markets`
       );
 
       for (
@@ -5427,7 +5427,7 @@ function startTelegramTradeWatcher({
       saveState();
 
       console.log(
-        `[Telegram Watcher] India full scan completed — ${successful}/${upstoxMarkets.length} successful`
+        `[Scanner] India full scan completed — ${successful}/${upstoxMarkets.length} successful`
       );
     };
 
@@ -5479,7 +5479,7 @@ function startTelegramTradeWatcher({
       ) {
 
         console.log(
-          `[Telegram Watcher] Twelve Data watcher budget reached (${watcherState.watcherCredits}/${DAILY_CREDIT_BUDGET})`
+          `[Scanner] Twelve Data watcher budget reached (${watcherState.watcherCredits}/${DAILY_CREDIT_BUDGET})`
         );
 
         void maybeNotifyBudgetExhausted();
@@ -5538,7 +5538,7 @@ function startTelegramTradeWatcher({
             if (!ran) {
 
               console.log(
-                "[Telegram Watcher] Previous scan still running • overlapping scan skipped"
+                "[Scanner] Previous scan still running • overlapping scan skipped"
               );
             }
           }
@@ -5551,7 +5551,7 @@ function startTelegramTradeWatcher({
               "Watcher scan failed";
 
             console.error(
-              "[Telegram Watcher] Tick failed:",
+              "[Scanner] Tick failed:",
               error.message
             );
           }
@@ -5614,7 +5614,7 @@ function startTelegramTradeWatcher({
       if (indiaTickRunning) {
 
         console.log(
-          "[Telegram Watcher] Previous India scan still running • overlapping India scan skipped"
+          "[Scanner] Previous India scan still running • overlapping India scan skipped"
         );
 
         return;
@@ -5633,7 +5633,7 @@ function startTelegramTradeWatcher({
           "India watcher scan failed";
 
         console.error(
-          "[Telegram Watcher] India tick failed:",
+          "[Scanner] India tick failed:",
           error.message
         );
 
@@ -5680,7 +5680,7 @@ function startTelegramTradeWatcher({
       runRecovery()
         .catch(err =>
           console.error(
-            "[Telegram Watcher] recovery boot error:",
+            "[Scanner] recovery boot error:",
             err.message
           )
         ),
