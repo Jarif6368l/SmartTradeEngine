@@ -44,3 +44,6 @@ recovery-history-*/
 public/*.backup
 public/*.failed*
 public/chart-debug.html
+*.bak*
+*.py
+run.sh
