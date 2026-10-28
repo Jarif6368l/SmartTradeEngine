@@ -2241,9 +2241,6 @@ body.classList.toggle(
 
   loadHistory();
 
-  setInterval(
-    loadHistory,
-    30 * 1000
-  );
+  // Auto-refresh disabled by user request
 
 })();
