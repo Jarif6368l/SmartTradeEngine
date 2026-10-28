@@ -4455,16 +4455,10 @@ function startTelegramTradeWatcher({
       ""
     ).trim();
 
-  if (
-    !token ||
-    !chatId
-  ) {
-
-    console.log(
-      "[Telegram Watcher] Disabled — Telegram credentials missing"
-    );
-
-    return;
+  if (!token || !chatId) {
+    console.log("[Telegram Watcher] Running WITHOUT Telegram. Scanning will continue and data will be saved to History.");
+  } else {
+    console.log("[Telegram Watcher] Telegram alerts are ENABLED.");
   }
 
   if (
