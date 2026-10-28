@@ -4,12 +4,22 @@ require("dotenv").config();
 let VERSION_INFO = { project: "SmartTradeEngine", version: "unknown", signature: "unknown", buildDate: "unknown" };
 try { VERSION_INFO = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "version.json"), "utf8")); } catch (e) {}
 
+// Auto-read latest git commit
+try {
+  const { execSync } = require("child_process");
+  const commitHash = execSync("git rev-parse --short HEAD", { cwd: __dirname }).toString().trim();
+  VERSION_INFO.liveCommit = commitHash;
+} catch (e) {
+  VERSION_INFO.liveCommit = "no-git";
+}
+
 console.log("");
 console.log("╔═══════════════════════════════════════════════╗");
 console.log("║  🚀 " + (VERSION_INFO.project || "SmartTradeEngine"));
 console.log("║  📦 Version:    " + VERSION_INFO.version);
 console.log("║  🏷️  Signature:  " + VERSION_INFO.signature);
 console.log("║  📅 Build Date: " + VERSION_INFO.buildDate);
+console.log("║  🔄 Live Commit: " + VERSION_INFO.liveCommit);
 console.log("╚═══════════════════════════════════════════════╝");
 console.log("");
 
