@@ -1979,27 +1979,39 @@ async function fetchWithTimeout(
 
 
 
+
+const nodemailer = require('nodemailer');
+
 async function sendTelegram(text) {
-  // 1. Save to local file (History)
+  // 1. Save to History file
   const file = '.notifications.json';
   let history = [];
   try { if (fs.existsSync(file)) history = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) {}
   history.unshift({ id: Date.now(), time: new Date().toISOString(), text: text });
   fs.writeFileSync(file, JSON.stringify(history.slice(0, 50), null, 2));
 
-  // 2. Send to WhatsApp via CallMeBot
-  const phone = process.env.WHATSAPP_PHONE;
-  const apikey = process.env.WHATSAPP_APIKEY;
+  // 2. Send Email
+  const gmailUser = process.env.GMAIL_USER;
+  const gmailPass = process.env.GMAIL_APP_PASS;
 
-  if (phone && apikey) {
+  if (gmailUser && gmailPass) {
     try {
-      const url = `https://api.callmebot.com/whatsapp.php?phone=${phone}&text=${encodeURIComponent(text)}&apikey=${apikey}`;
-      const res = await fetch(url);
-      if (res.ok) console.log('[WhatsApp] Alert sent successfully!');
-      else console.log('[WhatsApp] Failed to send alert.');
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user: gmailUser, pass: gmailPass }
+      });
+      await transporter.sendMail({
+        from: `"SmartTradeEngine" <${gmailUser}>`,
+        to: gmailUser,
+        subject: '🚨 New Trade Signal - SmartTradeEngine',
+        text: text
+      });
+      console.log('[Email] Signal sent to Gmail successfully!');
     } catch (e) {
-      console.log('[WhatsApp] Error:', e.message);
+      console.log('[Email] Failed to send:', e.message);
     }
+  } else {
+    console.log('[Email] Gmail credentials not set in .env');
   }
 
   return { message_id: Date.now() };
