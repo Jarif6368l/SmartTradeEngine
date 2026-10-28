@@ -2,47 +2,336 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
   <title>Signal History • AI Trading Analyst</title>
-  <link rel="stylesheet" href="site-navigation.css">
-  <link rel="stylesheet" href="history.css">
+
+  <link
+    rel="stylesheet"
+    href="site-navigation.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="history.css"
+  >
+<link rel="manifest" href="manifest.json">
 </head>
+
 <body>
+
   <header class="history-topbar">
-    <div id="historyConnection" class="status-badge">Loading…</div>
+
+    <div
+      id="historyConnection"
+      class="status-badge"
+    >
+      Loading…
+    </div>
+
   </header>
-  <main class="history-container">
+
+
+  <div id="leftNotificationPanel" class="left-notification-panel">
+  <div class="left-notify-head">NEW SIGNALS</div>
+  <div id="leftNotifyList" class="left-notify-list">Loading…</div>
+</div>
+
+<main class="history-container">
+
+    <div class="overview-group">
+
     <section class="summary-grid">
-      <article class="summary-card"><span>TOTAL SIGNALS</span><strong id="totalSignals">0</strong></article>
-      <article class="summary-card"><span>ACTIVE</span><strong id="activeSignals">0</strong></article>
-      <article class="summary-card"><span>AVERAGE SETUP QUALITY</span><strong id="averageQuality">--</strong></article>
-      <article class="summary-card"><span>LAST SIGNAL</span><strong id="latestSignal">--</strong></article>
+
+      <article class="summary-card">
+        <span>TOTAL SIGNALS</span>
+        <strong id="totalSignals">0</strong>
+      </article>
+
+      <article class="summary-card">
+        <span>ACTIVE</span>
+        <strong id="activeSignals">0</strong>
+      </article>
+
+      <article class="summary-card">
+        <span>AVERAGE SETUP QUALITY</span>
+        <strong id="averageQuality">--</strong>
+      </article>
+
+      <article class="summary-card">
+        <span>LAST SIGNAL</span>
+        <strong id="latestSignal">--</strong>
+      </article>
+
     </section>
 
+    </div>
+
     <section class="stats-panel">
+
       <div class="panel-heading">
-        <div><div class="section-label">LIFETIME STATISTICS</div><h2>SIGNAL PERFORMANCE</h2></div>
+        <div>
+          <div class="section-label">
+            LIFETIME STATISTICS
+          </div>
+
+          <h2>
+            SIGNAL PERFORMANCE
+          </h2>
+        </div>
+
+        <button class="history-section-toggle"
+                type="button"
+                aria-expanded="false"
+                aria-controls="lifetimeStatsContent"
+                aria-label="EXPAND LIFETIME STATISTICS">▼</button>
       </div>
+
+      <div id="lifetimeStatsContent" class="history-section-content history-section-collapsed">
       <div class="lifetime-stats-grid">
-        <article class="summary-card"><span>LIFETIME SIGNALS</span><strong id="statsTotal">0</strong></article>
-        <article class="summary-card"><span>ACTIVE</span><strong id="statsActive">0</strong></article>
-        <article class="summary-card"><span>T1 TOUCHED</span><strong id="statsT1">0</strong></article>
-        <article class="summary-card"><span>T2 HIT</span><strong id="statsT2">0</strong></article>
-        <article class="summary-card"><span>SL HIT</span><strong id="statsSL">0</strong></article>
+
+        <article class="summary-card">
+          <span>LIFETIME SIGNALS</span>
+          <strong id="statsTotal">0</strong>
+        </article>
+
+        <article class="summary-card">
+          <span>ACTIVE</span>
+          <strong id="statsActive">0</strong>
+        </article>
+
+        <article class="summary-card">
+          <span>T1 TOUCHED</span>
+          <strong id="statsT1">0</strong>
+        </article>
+
+        <article class="summary-card">
+          <span>T2 HIT</span>
+          <strong id="statsT2">0</strong>
+        </article>
+
+        <article class="summary-card">
+          <span>SL HIT</span>
+          <strong id="statsSL">0</strong>
+        </article>
+
+        <article class="summary-card">
+          <span>INVALIDATED</span>
+          <strong id="statsInvalidated">0</strong>
+        </article>
+
+        <article class="summary-card">
+          <span>STYLE CHANGED</span>
+          <strong id="statsStyleChanged">0</strong>
+        </article>
+
+        <article class="summary-card">
+          <span>AMBIGUOUS</span>
+          <strong id="statsAmbiguous">0</strong>
+        </article>
+
+        <article class="summary-card">
+          <span>AVERAGE MAX R</span>
+          <strong id="statsAverageMaxR">--</strong>
+        </article>
+
+        <article class="summary-card">
+          <span>AVERAGE RECORDED R</span>
+          <strong id="statsAverageOutcomeR">--</strong>
+          <small id="statsRecordedOutcomeCount">Recorded result count unavailable</small>
+        </article>
+
+        <article class="summary-card">
+          <span>AVERAGE SETUP QUALITY</span>
+          <strong id="statsAverageQuality">--</strong>
+        </article>
+
       </div>
+
+      <div class="statistics-note">
+        Historical observed results only. Setup Quality and past outcomes are not future win probabilities.
+        <br><br>
+        Tracking reference-price scenarios only: actual entry fills are not verified. Recorded R is a price-level result, not realized profit/loss; spread, fees and slippage are not included.
+        <br>
+        Only fully closed candles that begin at or after the alert are evaluated. The candle already open when the alert arrives is excluded, so touches during that period may be missed.
+      </div>
+      </div>
+
     </section>
 
     <section class="history-panel">
+
       <div class="panel-heading">
-        <div><div class="section-label">FILTERS</div><h2>TRADE SIGNAL RECORDS</h2></div>
+
+        <div>
+          <div class="section-label">
+            FILTERS
+          </div>
+
+          <h2>
+            TRADE SIGNAL RECORDS
+          </h2>
+        </div>
+
+        <div class="history-heading-actions">
+          <button class="history-section-toggle"
+                  type="button"
+                  aria-expanded="false"
+                  aria-controls="historyFiltersContent"
+                  aria-label="Expand Filters">▼</button>
+
+          <button
+          id="refreshHistory"
+          class="refresh-button"
+          type="button"
+        >
+          Refresh
+          </button>
+        </div>
+      </div>
+
+      <div id="historyFiltersContent" class="history-section-content history-section-collapsed">
+      <div class="filter-grid">
+
+        <label>
+          <span>Pair</span>
+
+          <select id="pairFilter">
+            <option value="">All Pairs</option>
+          </select>
+        </label>
+
+
+        <label>
+          <span>Style</span>
+
+          <select id="styleFilter">
+            <option value="">All Styles</option>
+            <option value="scalping">Scalping</option>
+            <option value="intraday">Intraday</option>
+            <option value="swing">Swing</option>
+          </select>
+        </label>
+
+
+        <label>
+          <span>Status</span>
+
+          <select id="statusFilter">
+            <option value="">All Status</option>
+            <option value="ACTIVE">ACTIVE</option>
+            <option value="INACTIVE">INACTIVE</option>
+          </select>
+        </label>
+
+
+        <label>
+          <span>Outcome</span>
+
+          <select id="outcomeFilter">
+            <option value="">All Outcomes</option>
+            <option value="OPEN">Open</option>
+            <option value="T1_HIT">T1 Hit</option>
+            <option value="T2_HIT">T2 HIT</option>
+            <option value="SL_HIT">SL HIT</option>
+            <option value="INVALIDATED">INVALIDATED</option>
+            <option value="STYLE_CHANGED">STYLE CHANGED</option>
+            <option value="AMBIGUOUS">AMBIGUOUS</option>
+            <option value="EXPIRED">Expired</option>
+          </select>
+        </label>
+
+
+        <label>
+          <span>Direction</span>
+
+          <select id="directionFilter">
+            <option value="">All Directions</option>
+            <option value="BULLISH">Bullish</option>
+            <option value="BEARISH">Bearish</option>
+          </select>
+        </label>
+
+
+        <label>
+          <span>Minimum Setup Quality</span>
+
+          <select id="qualityFilter">
+            <option value="">Any Quality</option>
+            <option value="70">70%+</option>
+            <option value="80">80%+</option>
+            <option value="90">90%+</option>
+          </select>
+        </label>
+
+
+        <label>
+          <span>Date Range</span>
+
+          <select id="dateFilter">
+            <option value="">All Time</option>
+            <option value="today">Today</option>
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+            <option value="custom">Custom</option>
+          </select>
+        </label>
+
+
+        <label
+          id="dateFromWrap"
+          class="custom-date-filter hidden"
+        >
+          <span>From</span>
+          <input
+            id="dateFrom"
+            type="date"
+          >
+        </label>
+
+
+        <label
+          id="dateToWrap"
+          class="custom-date-filter hidden"
+        >
+          <span>To</span>
+          <input
+            id="dateTo"
+            type="date"
+          >
+        </label>
+
+      </div>
+
+
+      <div class="quality-note">
+        Setup Quality % engine ka confluence score hai.
+        Ye guaranteed win probability nahi hai.
+      </div>
+      </div>
+
+    </section>
+
+
+    <section
+      id="historyList"
+      class="history-list"
+    >
+      <div class="empty-state">
+        History load ho rahi hai…
       </div>
     </section>
 
-    <section id="historyList" class="history-list">
-      <div class="empty-state">History load ho rahi hai…</div>
-    </section>
   </main>
+
+
   <script src="history.js"></script>
   <script src="site-navigation.js"></script>
+
+<script>if ("serviceWorker" in navigator) { navigator.serviceWorker.register("sw.js"); }</script>
 </body>
 </html>
