@@ -22,7 +22,7 @@ let paperTrading = null;
 try {
   paperTrading = require("./paper-trading");
 } catch (e) {
-  console.warn(
+  // console.warn(
     "[Demo] paper-trading module unavailable:",
     e && e.message
   );
@@ -38,7 +38,7 @@ function notifyDemoNewSignal(historyEntry) {
     }
     paperTrading.onNewSignal(historyEntry);
   } catch (e) {
-    console.error(
+    // console.error(
       "[Demo] onNewSignal hook failed:",
       e && e.message
     );
@@ -55,7 +55,7 @@ function notifyDemoOutcome(updatedRecord) {
     }
     paperTrading.onOutcomeUpdate(updatedRecord);
   } catch (e) {
-    console.error(
+    // console.error(
       "[Demo] onOutcomeUpdate hook failed:",
       e && e.message
     );
@@ -798,7 +798,7 @@ function readStateFromPaths(
 
       if (logRecovery) {
 
-        console.warn(
+        // console.warn(
           "[Scanner] Primary state unavailable/corrupt • recovered previous state"
         );
       }
@@ -1023,7 +1023,7 @@ function saveState() {
 
   } catch (error) {
 
-    console.error(
+    // console.error(
       "[Scanner] State save failed:",
       error.message
     );
@@ -1276,7 +1276,7 @@ async function maybeNotifyBudgetExhausted() {
     try {
       await sendTelegram(text);
     } catch (e) {
-      console.error(
+      // console.error(
         "[Scanner] Budget exhaustion alert failed:",
         e.message
       );
@@ -1303,7 +1303,7 @@ async function maybeNotifyBudgetExhausted() {
     );
 
   } catch (error) {
-    console.error(
+    // console.error(
       "[Scanner] maybeNotifyBudgetExhausted error:",
       error.message
     );
@@ -3797,7 +3797,7 @@ async function scanMarket(
 
       } catch (error) {
 
-        console.error(
+        // console.error(
           `[Scanner] ${market.symbol} pending ${pendingOutcome} Telegram retry failed:`,
           error.message
         );
@@ -3966,7 +3966,7 @@ async function scanMarket(
 
     } catch (error) {
 
-      console.error(
+      // console.error(
         `[Scanner] ${market.symbol} outcome Telegram failed:`,
         error.message
       );
@@ -4543,7 +4543,7 @@ function startTelegramTradeWatcher({
 
       } catch (e) {
 
-        console.error(
+        // console.error(
           "[Scanner] recordSuccessfulScan failed:",
           e.message
         );
@@ -4576,7 +4576,7 @@ function startTelegramTradeWatcher({
 
       } catch (error) {
 
-        console.error(
+        // console.error(
           `[Scanner] ${market.symbol}${market.exchange ? ` • ${market.exchange}` : ""} failed:`,
           error.message
         );
@@ -5183,7 +5183,7 @@ function startTelegramTradeWatcher({
             "[Scanner] OFFLINE RECOVERY REPORT sent"
           );
         } catch (e) {
-          console.error(
+          // console.error(
             "[Scanner] recovery report send failed:",
             e.message
           );
@@ -5233,7 +5233,7 @@ function startTelegramTradeWatcher({
 
       } catch (error) {
 
-        console.error(
+        // console.error(
           "[Scanner] recovery failed:",
           error.message
         );
@@ -5554,7 +5554,7 @@ function startTelegramTradeWatcher({
               error.message ||
               "Watcher scan failed";
 
-            console.error(
+            // console.error(
               "[Scanner] Tick failed:",
               error.message
             );
@@ -5636,7 +5636,7 @@ function startTelegramTradeWatcher({
           error.message ||
           "India watcher scan failed";
 
-        console.error(
+        // console.error(
           "[Scanner] India tick failed:",
           error.message
         );
@@ -5683,7 +5683,7 @@ function startTelegramTradeWatcher({
     () =>
       runRecovery()
         .catch(err =>
-          console.error(
+          // console.error(
             "[Scanner] recovery boot error:",
             err.message
           )
