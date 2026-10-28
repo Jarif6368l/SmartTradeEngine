@@ -17,6 +17,20 @@ function rotateKey() {
   }
 }
 
+let tdRequestTimes = [];
+const TD_MAX_REQ_PER_MIN = 6;
+async function tdRateLimit() {
+  const now = Date.now();
+  tdRequestTimes = tdRequestTimes.filter(t => now - t < 60000);
+  if (tdRequestTimes.length >= TD_MAX_REQ_PER_MIN) {
+    const waitMs = 60000 - (now - tdRequestTimes[0]) + 300;
+    console.log("[Twelve Data] Throttling for " + (waitMs/1000).toFixed(1) + "s...");
+    await new Promise(r => setTimeout(r, waitMs));
+  }
+  tdRequestTimes.push(Date.now());
+}
+
+
 
 const {
   WebSocketServer,
@@ -12819,7 +12833,9 @@ async function fetchTwelveCandles(
     );
 
 
-  let response;
+  await tdRateLimit();
+
+    let response;
 
   try {
 
