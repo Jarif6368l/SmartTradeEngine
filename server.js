@@ -10,10 +10,12 @@ let activeKeyIndex = 0;
 function getActiveKey() {
   return TWELVE_DATA_KEYS[activeKeyIndex % TWELVE_DATA_KEYS.length];
 }
-function rotateKey() {
+async function rotateKey() {
   if (TWELVE_DATA_KEYS.length > 1) {
     activeKeyIndex++;
     console.log("[Twelve Data] Rotated to API key #" + (activeKeyIndex % TWELVE_DATA_KEYS.length + 1));
+    console.log("[Twelve Data] Pausing 60s to let IP rate limit reset...");
+    await new Promise(r => setTimeout(r, 60000));
   }
 }
 
@@ -12911,7 +12913,7 @@ async function fetchTwelveCandles(
   ) {
     const errMsg = String(data.message || "").toLowerCase();
     if (errMsg.includes("credits") || errMsg.includes("limit") || errMsg.includes("429")) {
-      rotateKey();
+      await rotateKey();
     }
     throw new Error(
       data.message ||
