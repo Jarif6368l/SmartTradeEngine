@@ -19,6 +19,7 @@
     rel="stylesheet"
     href="history.css"
   >
+<link rel="manifest" href="manifest.json">
 </head>
 
 <body>
@@ -326,5 +327,6 @@
   <script src="history.js"></script>
   <script src="site-navigation.js"></script>
 
+<script>if ("serviceWorker" in navigator) { navigator.serviceWorker.register("sw.js"); }</script>
 </body>
 </html>

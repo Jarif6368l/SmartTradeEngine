@@ -18,6 +18,7 @@
   >
 <link rel="stylesheet" href="premium-dashboard.css?v=1789578631558">
 <link rel="stylesheet" href="site-navigation.css?v=1789579142177">
+<link rel="manifest" href="manifest.json">
 </head>
 
 <body>
@@ -818,5 +819,6 @@
 <script src="reasoning.js"></script>
 <script src="app.js?v=chartfix20261016"></script>
 
+<script>if ("serviceWorker" in navigator) { navigator.serviceWorker.register("sw.js"); }</script>
 </body>
 </html>

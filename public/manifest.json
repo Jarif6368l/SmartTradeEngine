@@ -1,0 +1,16 @@
+{
+  "name": "SmartTradeEngine",
+  "short_name": "SmartTrade",
+  "start_url": "/report.html",
+  "display": "standalone",
+  "background_color": "#020d1a",
+  "theme_color": "#020d1a",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDggMTA4Ij48cmVjdCB3aWR0aD0iMTA4IiBoZWlnaHQ9IjEwOCIgZmlsbD0iIzA3MTQyNiIvPjxwYXRoIGZpbGw9IiMwMEU1RkYiIGQ9Ik03MywyNCBMMzksMjQgUTIyLDI0IDIyLDQxIFEyMiw1NCAzOSw1OSBMNjIsNjYgUTcyLDY5IDcyLDc3IFE3Miw4NSA2MCw4NSBMMzAsODUgTDMwLDk2IEw2Miw5NiBRODYsOTYgODYsNzYgUTg2LDYxIDY3LDU1IEw0Myw0OCBRMzYsNDYgMzYsNDAgUTM2LDM1IDQzLDM1IEw3MywzNSBaIi8+PC9zdmc+",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
