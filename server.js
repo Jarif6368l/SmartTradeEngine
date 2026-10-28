@@ -1,9 +1,9 @@
 require("dotenv").config();
 
 const TWELVE_DATA_KEYS = [
-  getActiveKey(),
-  getActiveKey()_2,
-  getActiveKey()_3
+  process.env.TWELVE_DATA_API_KEY,
+  process.env.TWELVE_DATA_API_KEY_2,
+  process.env.TWELVE_DATA_API_KEY_3
 ].filter(k => k && k.trim() !== "");
 
 let activeKeyIndex = 0;
