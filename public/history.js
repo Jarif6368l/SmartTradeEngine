@@ -9,7 +9,7 @@
   let allHistory = [];
 
   const expandedSignalIds = new Set();
-  const expandedWhySignalIds = new Set();
+  
 
 
   function valueOrDash(
@@ -632,9 +632,7 @@
         ? String(row.id)
         : null;
 
-    const isExpanded =
-      whyKey !== null &&
-      expandedWhySignalIds.has(whyKey);
+    const isExpanded = false;
 
     const heading = make("div", "why-signal-heading");
     heading.setAttribute("role", "button");
@@ -697,13 +695,7 @@
       heading.setAttribute("aria-expanded", String(nextOpen));
       bodyEl.classList.toggle("why-signal-collapsed", !nextOpen);
 
-      if (whyKey !== null) {
-        if (nextOpen) {
-          expandedWhySignalIds.add(whyKey);
-        } else {
-          expandedWhySignalIds.delete(whyKey);
-        }
-      }
+      
     };
     heading.addEventListener("click", toggle);
     heading.addEventListener("keydown", e => {
