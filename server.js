@@ -1,27 +1,5 @@
 require("dotenv").config();
 
-const TWELVE_DATA_KEYS = [
-  process.env.TWELVE_DATA_API_KEY,
-  process.env.TWELVE_DATA_API_KEY_2,
-  process.env.TWELVE_DATA_API_KEY_3
-].filter(k => k && k.trim() !== "");
-
-let activeKeyIndex = 0;
-let lastRotationTime = Date.now();
-const ROTATION_INTERVAL_MS = 8 * 60 * 60 * 1000;
-
-function getActiveKey() {
-  if (TWELVE_DATA_KEYS.length <= 1) return TWELVE_DATA_KEYS[0] || "";
-  const now = Date.now();
-  if (now - lastRotationTime >= ROTATION_INTERVAL_MS) {
-    activeKeyIndex = (activeKeyIndex + 1) % TWELVE_DATA_KEYS.length;
-    lastRotationTime = now;
-    console.log("[Twelve Data] 8 Hours completed. Rotated to API key #" + (activeKeyIndex + 1));
-  }
-  return TWELVE_DATA_KEYS[activeKeyIndex];
-}
-
-
 const {
   WebSocketServer,
   WebSocket
@@ -718,7 +696,8 @@ app.get(
 
       apiConfigured:
         Boolean(
-          getActiveKey()
+          process.env
+            .TWELVE_DATA_API_KEY
         ),
 
       upstoxConfigured:
@@ -976,7 +955,8 @@ async function fetchMarketReference(
 ) {
 
   const apiKey =
-    getActiveKey();
+    process.env
+      .TWELVE_DATA_API_KEY;
 
 
   if (!apiKey) {
@@ -12697,7 +12677,8 @@ async function fetchTwelveCandles(
 ) {
 
   const apiKey =
-    getActiveKey();
+    process.env
+      .TWELVE_DATA_API_KEY;
 
   if (!apiKey) {
 
@@ -13565,7 +13546,8 @@ app.get(
 
 
       const apiKey =
-        getActiveKey();
+        process.env
+          .TWELVE_DATA_API_KEY;
 
 
       if (!apiKey) {
@@ -14407,7 +14389,8 @@ function startTwelveForClient(
 ) {
 
   const apiKey =
-    getActiveKey();
+    process.env
+      .TWELVE_DATA_API_KEY;
 
 
   if (!apiKey) {
