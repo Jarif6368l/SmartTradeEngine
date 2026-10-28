@@ -9,7 +9,7 @@
   let allHistory = [];
 
   const expandedSignalIds = new Set();
-  
+
 
 
   function valueOrDash(
@@ -695,7 +695,7 @@
       heading.setAttribute("aria-expanded", String(nextOpen));
       bodyEl.classList.toggle("why-signal-collapsed", !nextOpen);
 
-      
+
     };
     heading.addEventListener("click", toggle);
     heading.addEventListener("keydown", e => {

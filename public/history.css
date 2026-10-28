@@ -1295,3 +1295,10 @@ body {
   flex: 0 0 auto;
   line-height: 1;
 }
+
+.why-signal-body.why-signal-collapsed {
+  max-height: 0 !important;
+  opacity: 0 !important;
+  margin-top: 0 !important;
+  pointer-events: none !important;
+}
