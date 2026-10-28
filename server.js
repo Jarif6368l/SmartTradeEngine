@@ -8,7 +8,9 @@ try { VERSION_INFO = JSON.parse(require("fs").readFileSync(require("path").join(
 try {
   const { execSync } = require("child_process");
   const commitHash = execSync("git rev-parse --short HEAD", { cwd: __dirname }).toString().trim();
+  const commitCount = execSync("git rev-list --count HEAD", { cwd: __dirname }).toString().trim();
   VERSION_INFO.liveCommit = commitHash;
+  VERSION_INFO.buildNumber = commitCount;
 } catch (e) {
   VERSION_INFO.liveCommit = "no-git";
 }
@@ -19,7 +21,7 @@ console.log("║  🚀 " + (VERSION_INFO.project || "SmartTradeEngine"));
 console.log("║  📦 Version:    " + VERSION_INFO.version);
 console.log("║  🏷️  Signature:  " + VERSION_INFO.signature);
 console.log("║  📅 Build Date: " + VERSION_INFO.buildDate);
-console.log("║  🔄 Live Commit: " + VERSION_INFO.liveCommit);
+console.log("║  🔄 Live Commit: " + VERSION_INFO.liveCommit + " (Build #" + (VERSION_INFO.buildNumber || "0") + ")");
 console.log("╚═══════════════════════════════════════════════╝");
 console.log("");
 
