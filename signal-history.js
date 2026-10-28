@@ -342,10 +342,7 @@ function writeAll(rows) {
         );
 
 
-      fs.copyFileSync(
-        HISTORY_FILE,
-        mirror
-      );
+      // fs.copyFileSync disabled to save storage
 
 
       const day =
@@ -361,10 +358,7 @@ function writeAll(rows) {
         );
 
 
-      fs.copyFileSync(
-        HISTORY_FILE,
-        daily
-      );
+      // fs.copyFileSync disabled to save storage
     }
 
   } catch (error) {
