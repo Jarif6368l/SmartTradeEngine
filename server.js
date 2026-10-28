@@ -1860,6 +1860,8 @@ async function fetchUSMacroSnapshot() {
   }
 
 
+  await tdRateLimit();
+
   const controller =
     new AbortController();
 
@@ -12833,9 +12835,7 @@ async function fetchTwelveCandles(
     );
 
 
-  await tdRateLimit();
-
-    let response;
+  let response;
 
   try {
 
