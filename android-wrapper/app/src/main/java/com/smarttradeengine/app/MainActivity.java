@@ -5,11 +5,10 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.Gravity;
-import android.view.View;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 public class MainActivity extends Activity {
     private WebView webView;
@@ -18,21 +17,19 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // 1. Create a Splash Screen Layout
+        // Splash Screen Layout
         LinearLayout splashLayout = new LinearLayout(this);
         splashLayout.setOrientation(LinearLayout.VERTICAL);
-        splashLayout.setBackgroundColor(Color.parseColor("#071426")); // Dark background
+        splashLayout.setBackgroundColor(Color.parseColor("#020916")); // Deep Dark Background
         splashLayout.setGravity(Gravity.CENTER);
 
-        // 2. Add the Brain Logo
+        // Load the Custom Vector Logo
         ImageView logoView = new ImageView(this);
-        logoView.setImageResource(getResources().getIdentifier("splash_logo", "drawable", getPackageName()));
-        logoView.setAdjustViewBounds(true);
-        logoView.setMaxWidth(600); // Fit to screen
-
+        logoView.setImageResource(R.drawable.splash_logo);
+        
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.MATCH_PARENT
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
         );
         params.setMargins(40, 40, 40, 40);
         logoView.setLayoutParams(params);
@@ -40,7 +37,7 @@ public class MainActivity extends Activity {
 
         setContentView(splashLayout);
 
-        // 3. Wait 2.5 seconds, then load the WebView
+        // Wait 2.5 seconds then load the app
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -55,8 +52,6 @@ public class MainActivity extends Activity {
         webView.getSettings().setDomStorageEnabled(true);
         webView.setWebViewClient(new WebViewClient());
         setContentView(webView);
-
-        // Make sure the Node.js server is running on port 3000
         webView.loadUrl("http://127.0.0.1:3000/report.html");
     }
 
