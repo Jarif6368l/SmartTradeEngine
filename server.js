@@ -1,42 +1,26 @@
 require("dotenv").config();
 
 const TWELVE_DATA_KEYS = [
-  process.env.TWELVE_DATA_API_KEY,
+  getActiveKey(),
   process.env.TWELVE_DATA_API_KEY_2,
   process.env.TWELVE_DATA_API_KEY_3
 ].filter(k => k && k.trim() !== "");
 
 let activeKeyIndex = 0;
+let lastRotationTime = Date.now();
+const ROTATION_INTERVAL_MS = 8 * 60 * 60 * 1000; // 8 Hours
+
 function getActiveKey() {
-  return TWELVE_DATA_KEYS[activeKeyIndex % TWELVE_DATA_KEYS.length];
-}
-async function rotateKey() {
-  if (TWELVE_DATA_KEYS.length > 1) {
-    activeKeyIndex++;
-    console.log("[Twelve Data] Rotated to API key #" + (activeKeyIndex % TWELVE_DATA_KEYS.length + 1));
-    console.log("[Twelve Data] Pausing 60s to let IP rate limit reset...");
-    await new Promise(r => setTimeout(r, 60000));
+  if (TWELVE_DATA_KEYS.length <= 1) return TWELVE_DATA_KEYS[0] || getActiveKey();
+  
+  const now = Date.now();
+  if (now - lastRotationTime >= ROTATION_INTERVAL_MS) {
+    activeKeyIndex = (activeKeyIndex + 1) % TWELVE_DATA_KEYS.length;
+    lastRotationTime = now;
+    console.log("[Twelve Data] 8 Hours completed. Rotated to API key #" + (activeKeyIndex + 1));
   }
+  return TWELVE_DATA_KEYS[activeKeyIndex];
 }
-
-let tdRequestTimes = [];
-let tdRateLimitPromise = Promise.resolve();
-const TD_MAX_REQ_PER_MIN = 4; // Reduced to 4 to be safe (4 timeframes x 1 market = 4)
-
-function tdRateLimit() {
-  tdRateLimitPromise = tdRateLimitPromise.then(async () => {
-    const now = Date.now();
-    tdRequestTimes = tdRequestTimes.filter(t => now - t < 60000);
-    if (tdRequestTimes.length >= TD_MAX_REQ_PER_MIN) {
-      const waitMs = 60000 - (now - tdRequestTimes[0]) + 500;
-      console.log("[Twelve Data] Throttling for " + (waitMs/1000).toFixed(1) + "s...");
-      await new Promise(r => setTimeout(r, waitMs));
-    }
-    tdRequestTimes.push(Date.now());
-  });
-  return tdRateLimitPromise;
-}
-
 
 
 const {
@@ -1866,8 +1850,6 @@ async function fetchUSMacroSnapshot() {
     };
   }
 
-
-  await tdRateLimit();
 
   const controller =
     new AbortController();
@@ -12916,10 +12898,7 @@ async function fetchTwelveCandles(
     data.status ===
       "error"
   ) {
-    const errMsg = String(data.message || "").toLowerCase();
-    if (errMsg.includes("credits") || errMsg.includes("limit") || errMsg.includes("429")) {
-      await rotateKey();
-    }
+
     throw new Error(
       data.message ||
       (
