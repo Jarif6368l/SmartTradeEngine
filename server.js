@@ -1,5 +1,23 @@
 require("dotenv").config();
 
+const TWELVE_DATA_KEYS = [
+  getActiveKey(),
+  getActiveKey()_2,
+  getActiveKey()_3
+].filter(k => k && k.trim() !== "");
+
+let activeKeyIndex = 0;
+function getActiveKey() {
+  return TWELVE_DATA_KEYS[activeKeyIndex % TWELVE_DATA_KEYS.length];
+}
+function rotateKey() {
+  if (TWELVE_DATA_KEYS.length > 1) {
+    activeKeyIndex++;
+    console.log("[Twelve Data] Rotated to API key #" + (activeKeyIndex % TWELVE_DATA_KEYS.length + 1));
+  }
+}
+
+
 const {
   WebSocketServer,
   WebSocket
@@ -12875,7 +12893,10 @@ async function fetchTwelveCandles(
     data.status ===
       "error"
   ) {
-
+    const errMsg = String(data.message || "").toLowerCase();
+    if (errMsg.includes("credits") || errMsg.includes("limit") || errMsg.includes("429")) {
+      rotateKey();
+    }
     throw new Error(
       data.message ||
       (
