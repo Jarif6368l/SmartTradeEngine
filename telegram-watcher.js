@@ -4593,6 +4593,23 @@ function startTelegramTradeWatcher({
           error.message
         );
 
+        // === API LIMIT ALERT LOGIC ===
+        const errMsg = String(error.message || "").toLowerCase();
+        if (errMsg.includes("credits") || errMsg.includes("limit") || errMsg.includes("429")) {
+          const today = currentIstDay();
+          if (watcherState.lastApiLimitAlert !== today) {
+            try {
+              await sendTelegram("⚠️ ALERT: Twelve Data API limit reached.\n\nPlease add a new key in .env and restart the server to resume scanning.");
+              watcherState.lastApiLimitAlert = today;
+              saveState();
+              console.log("[Scanner] API limit alert email sent.");
+            } catch (e) {
+              console.error("[Scanner] Failed to send API limit email:", e.message);
+            }
+          }
+        }
+        // ==============================
+
         return false;
       }
     };
