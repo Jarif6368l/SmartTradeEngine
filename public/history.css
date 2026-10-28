@@ -1353,3 +1353,28 @@ body { margin-left: 260px !important; }
   .left-notification-panel { width: 100%; max-width: 260px; box-shadow: 2px 0 10px rgba(0,0,0,0.5); }
   body { margin-left: 0 !important; }
 }
+
+/* FINAL FIX: Mobile Notification Panel Overlap */
+.left-notification-panel {
+  width: 210px !important; /* Kam width taaki content dikhe */
+}
+
+body {
+  margin-left: 210px !important;
+  transition: margin-left 0.3s ease;
+}
+
+/* Mobile screen ke liye special rules */
+@media (max-width: 600px) {
+  .left-notification-panel {
+    width: 200px !important;
+  }
+  body {
+    margin-left: 200px !important;
+  }
+}
+
+/* Agar panel band karna ho toh (Future mein) */
+body.no-notify-panel {
+  margin-left: 0 !important;
+}
