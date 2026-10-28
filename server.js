@@ -1,5 +1,18 @@
 require("dotenv").config();
 
+// === PROJECT VERSION (Identity Card) ===
+let VERSION_INFO = { project: "SmartTradeEngine", version: "unknown", signature: "unknown", buildDate: "unknown" };
+try { VERSION_INFO = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "version.json"), "utf8")); } catch (e) {}
+
+console.log("");
+console.log("╔═══════════════════════════════════════════════╗");
+console.log("║  🚀 " + (VERSION_INFO.project || "SmartTradeEngine"));
+console.log("║  📦 Version:    " + VERSION_INFO.version);
+console.log("║  🏷️  Signature:  " + VERSION_INFO.signature);
+console.log("║  📅 Build Date: " + VERSION_INFO.buildDate);
+console.log("╚═══════════════════════════════════════════════╝");
+console.log("");
+
 const {
   WebSocketServer,
   WebSocket
@@ -369,6 +382,8 @@ app.use(
   "/api",
   apiRateLimiter
 );
+
+app.get("/api/version", (req, res) => res.json({ ok: true, ...VERSION_INFO }));
 
 app.get("/", (req, res) => {
   res.redirect("/report.html");

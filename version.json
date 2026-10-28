@@ -1,0 +1,19 @@
+{
+  "project": "SmartTradeEngine",
+  "version": "1.0.0",
+  "buildDate": "2026-10-28",
+  "signature": "STE-STABLE-2026-10-28",
+  "status": "PRODUCTION-STABLE",
+  "features": [
+    "1D Alignment Strict Filter",
+    "SMC Premium/Discount Filter",
+    "Gmail Email Alerts",
+    "API Limit Auto Alert",
+    "History No Auto-Refresh",
+    "No Duplicate Storage Backup",
+    "Scalping/Intraday/Swing Enabled",
+    "8-Hour Key Rotation",
+    "Rate Limiter Queue"
+  ],
+  "lastCommit": "5f88fe4"
+}
