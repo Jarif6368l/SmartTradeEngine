@@ -1978,22 +1978,26 @@ async function fetchWithTimeout(
 
 
 
-const nodemailer = require('nodemailer');
 async function sendTelegram(text) {
+  // Save to local notification file instead of Telegram
   const file = '.notifications.json';
   let history = [];
-  try { if (fs.existsSync(file)) history = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) {}
-  history.unshift({ id: Date.now(), time: new Date().toISOString(), text: text });
-  fs.writeFileSync(file, JSON.stringify(history.slice(0, 50), null, 2));
-  const gmailUser = process.env.GMAIL_USER;
-  const gmailPass = process.env.GMAIL_APP_PASS;
-  if (gmailUser && gmailPass) {
-    try {
-      const transporter = nodemailer.createTransport({ service: 'gmail', auth: { user: gmailUser, pass: gmailPass } });
-      await transporter.sendMail({ from: `"SmartTradeEngine" <${gmailUser}>`, to: gmailUser, subject: '🚨 New Trade Signal', text: text });
-      console.log('[Email] Signal sent successfully!');
-    } catch (e) { console.log('[Email] Error:', e.message); }
-  }
+  try {
+    if (fs.existsSync(file)) {
+      history = JSON.parse(fs.readFileSync(file, 'utf8'));
+    }
+  } catch (e) {}
+  
+  history.unshift({
+    id: Date.now(),
+    time: new Date().toISOString(),
+    text: text
+  });
+  
+  // Keep only last 50 notifications
+  history = history.slice(0, 50);
+  fs.writeFileSync(file, JSON.stringify(history, null, 2));
+  console.log('[Local Notify] New signal saved to .notifications.json');
   return { message_id: Date.now() };
 }
 
@@ -4451,8 +4455,16 @@ function startTelegramTradeWatcher({
       ""
     ).trim();
 
-  if (!token || !chatId) {
-    console.log("[Scanner] Running WITHOUT Telegram. Scanning will continue and signals will be emailed.");
+  if (
+    !token ||
+    !chatId
+  ) {
+
+    console.log(
+      "[Telegram Watcher] Disabled — Telegram credentials missing"
+    );
+
+    return;
   }
 
   if (
