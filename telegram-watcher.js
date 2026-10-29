@@ -837,23 +837,29 @@ marketIndex =
 watcherState.marketIndex =
   marketIndex;
 
+function getApiKeyHash() {
+  const key = String(process.env.TWELVE_DATA_API_KEY || "");
+  if (!key) return "no-key";
+  return require("crypto").createHash("md5").update(key).digest("hex").slice(0, 8);
+}
+
 function resetDailyBudgetIfNeeded() {
+  const today = new Date().toISOString().slice(0, 10);
+  const currentKeyHash = getApiKeyHash();
+  let resetReason = null;
 
-  const today =
-    new Date()
-      .toISOString()
-      .slice(0, 10);
+  if (watcherState.day !== today) {
+    resetReason = "New day";
+  } else if (watcherState.keyHash !== currentKeyHash) {
+    resetReason = "New API key detected";
+  }
 
-  if (
-    watcherState.day !==
-    today
-  ) {
-
-    watcherState.day =
-      today;
-
-    watcherState.watcherCredits =
-      0;
+  if (resetReason) {
+    watcherState.day = today;
+    watcherState.watcherCredits = 0;
+    watcherState.keyHash = currentKeyHash;
+    saveState();
+    console.log("[Scanner] Budget auto-reset: " + resetReason);
   }
 }
 
