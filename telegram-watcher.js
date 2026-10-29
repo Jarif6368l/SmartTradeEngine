@@ -4498,6 +4498,11 @@ function startTelegramTradeWatcher({
   watcherHealth.enabled =
     true;
 
+  // Send Startup Message to Telegram
+  if (typeof sendTelegram === "function") {
+    sendTelegram("✅ SmartTradeEngine Bot Started Successfully.\n\nMonitoring " + WATCH_MARKETS.length + " pairs...\nStrict Filters ACTIVE.");
+  }
+
 
   console.log(
     `[Telegram Watcher] Ready — ${WATCH_MARKETS.length} pairs • 3 styles • ${DAILY_CREDIT_BUDGET} credit/day watcher budget`
