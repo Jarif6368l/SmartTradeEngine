@@ -4823,187 +4823,41 @@ function startTelegramTradeWatcher({
     };
 
 
-  const buildRecoveryReport =
-    (summary) => {
+  const buildRecoveryReport = (summary) => {
+  const lines = [];
+  let errors = 0;
 
-      const lines = [];
+  for (const r of summary.marketResults) {
+    if (r.status !== "ok" && r.status !== "skipped_schedule" && r.status !== "no_candles_in_window") {
+      errors++;
+    }
+  }
 
-      lines.push("━━━━━━━━━━━━━━━━");
-      lines.push("🔄 OFFLINE RECOVERY REPORT");
-      lines.push("━━━━━━━━━━━━━━━━");
-      lines.push("");
+  const counts = summary.counts;
 
-      lines.push(
-        "Offline period:"
-      );
-      lines.push(
-        formatRecoveryTime(summary.windowStartIso) +
-        " → " +
-        formatRecoveryTime(summary.windowEndIso)
-      );
-      lines.push("");
+  lines.push("🔄 OFFLINE RECOVERY SUMMARY");
+  lines.push("━━━━━━━━━━━━━━━━");
+  lines.push(`⏱ ${formatRecoveryTime(summary.windowStartIso)} → ${formatRecoveryTime(summary.windowEndIso)}`);
+  lines.push(`📡 Markets: ${summary.marketsChecked}/${summary.marketsTotal} checked`);
 
-      if (summary.partialReason) {
-        lines.push("⚠️ " + summary.partialReason);
-        lines.push("");
-      }
+  if (errors > 0) {
+    lines.push(`⚠️ Errors: ${errors} markets failed (e.g. API Limit)`);
+  }
 
-      lines.push("Markets checked:");
-      lines.push(
-        "• " + summary.marketsChecked + "/" +
-        summary.marketsTotal +
-        " within schedule window"
-      );
-      lines.push("");
+  if (counts.candidates > 0 || counts.t1 > 0 || counts.t2 > 0 || counts.sl > 0) {
+    lines.push(`🎯 Setups: ${counts.candidates} found (T1: ${counts.t1}, T2: ${counts.t2}, SL: ${counts.sl})`);
+  } else {
+    lines.push("🎯 Setups: None found during offline period");
+  }
 
-      lines.push("Missed/Recovered Events:");
+  lines.push("");
+  lines.push("✅ Live scanning resumed.");
+  lines.push("━━━━━━━━━━━━━━━━");
 
-      let anyEvent = false;
+  return lines.join("\n");
+};
 
-      for (const r of summary.marketResults) {
-
-        if (r.status === "skipped_schedule") {
-          continue;
-        }
-
-        anyEvent = true;
-
-        const label =
-          r.market.symbol +
-          (r.market.exchange
-            ? " • " + r.market.exchange
-            : "");
-
-        if (r.status === "insufficient") {
-          lines.push(
-            "• " + label + " — DATA INSUFFICIENT"
-          );
-          continue;
-        }
-
-        if (r.status === "non_recoverable") {
-          lines.push(
-            "• " + label + " — UNAVAILABLE (" +
-            (r.error || "provider rejected") + ")"
-          );
-          continue;
-        }
-
-        if (r.status === "error" || r.status === "network_error") {
-          lines.push(
-            "• " + label + " — ERROR (" +
-            (r.error || "unknown") + ")"
-          );
-          continue;
-        }
-
-        if (
-          r.status === "no_candles_in_window" ||
-          r.candidates.length === 0
-        ) {
-          lines.push(
-            "• " + label + " — NO SETUP / WAIT"
-          );
-          continue;
-        }
-
-        const last =
-          r.candidates[r.candidates.length - 1];
-
-        const risk =
-          last.analysis.risk || {};
-
-        const style =
-          last.analysis.style || {};
-
-        const dir =
-          style.bias ||
-          risk.directionalContext ||
-          "UNKNOWN";
-
-        const oc =
-          last.outcome && last.outcome.outcome ||
-          "WAIT";
-
-        lines.push(
-          "• " + label + " — " +
-          dir + " setup candidate"
-        );
-
-        if (Number.isFinite(Number(risk.entryReference))) {
-          lines.push(
-            "  Entry: " + risk.entryReference
-          );
-        }
-        if (Number.isFinite(Number(risk.stopLoss))) {
-          lines.push(
-            "  SL: " + risk.stopLoss
-          );
-        }
-        if (Number.isFinite(Number(risk.target1))) {
-          lines.push(
-            "  T1: " + risk.target1
-          );
-        }
-        if (Number.isFinite(Number(risk.target2))) {
-          lines.push(
-            "  T2: " + risk.target2
-          );
-        }
-
-        lines.push(
-          "  Result: " + oc
-        );
-
-        if (
-          oc === "SL_HIT" ||
-          oc === "AMBIGUOUS"
-        ) {
-
-          const reason =
-            (last.outcome &&
-              last.outcome.slReason) ||
-            "";
-
-          if (reason) {
-            lines.push(
-              "  Reason: " + reason
-            );
-          }
-        }
-      }
-
-      if (!anyEvent) {
-        lines.push("• No markets were active during gap.");
-      }
-
-      lines.push("");
-      lines.push("Summary:");
-
-      const counts = summary.counts;
-
-      lines.push(
-        "Signals reconstructed: " +
-        counts.candidates
-      );
-      lines.push("T1: " + counts.t1);
-      lines.push("T2: " + counts.t2);
-      lines.push("SL: " + counts.sl);
-      lines.push("Invalidated: " + counts.invalidated);
-      lines.push("No setup/WAIT: " + counts.wait);
-
-      lines.push("");
-      lines.push(
-        "Current live scan resumed: YES"
-      );
-      lines.push("");
-      lines.push("━━━━━━━━━━━━━━━━");
-
-      return lines.join("\n");
-    };
-
-
-  const recoveryCounts = (results) => {
+const recoveryCounts = (results) => {
 
     const counts = {
       candidates: 0,
