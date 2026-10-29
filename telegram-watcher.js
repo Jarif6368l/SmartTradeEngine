@@ -1979,28 +1979,38 @@ async function fetchWithTimeout(
 
 
 async function sendTelegram(text) {
-  // Save to local notification file instead of Telegram
+  const token = String(process.env.TELEGRAM_BOT_TOKEN || "").trim();
+  const chatId = String(process.env.TELEGRAM_CHAT_ID || "").trim();
+
+  // Save to local history file (for website)
   const file = '.notifications.json';
   let history = [];
-  try {
-    if (fs.existsSync(file)) {
-      history = JSON.parse(fs.readFileSync(file, 'utf8'));
+  try { if (fs.existsSync(file)) history = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) {}
+  history.unshift({ id: Date.now(), time: new Date().toISOString(), text });
+  fs.writeFileSync(file, JSON.stringify(history.slice(0, 50), null, 2));
+
+  // Send to Telegram
+  if (token && chatId) {
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, text })
+      });
+      const data = await res.json();
+      if (data.ok) {
+         console.log(`[Telegram] Message sent successfully (ID: ${data.result.message_id})`);
+         return data.result;
+      } else {
+         console.log(`[Telegram] Failed: ${data.description}`);
+         return null;
+      }
+    } catch (e) {
+      console.log(`[Telegram] Error: ${e.message}`);
     }
-  } catch (e) {}
-  
-  history.unshift({
-    id: Date.now(),
-    time: new Date().toISOString(),
-    text: text
-  });
-  
-  // Keep only last 50 notifications
-  history = history.slice(0, 50);
-  fs.writeFileSync(file, JSON.stringify(history, null, 2));
-  console.log('[Local Notify] New signal saved to .notifications.json');
+  }
   return { message_id: Date.now() };
 }
-
 
 /* === SL HIT REASON: factual reason derivation from existing stored data ===
  *
