@@ -347,21 +347,23 @@ class ModeAnalysisEngine {
     r.bias =
       h4.trend;
 
-    // === STRICT FILTERS (Injected by AI) ===
-    if (r.daily.structure.trend !== r.bias) {
-       r.reason = "STRICT FILTER: Daily (1D) trend is not aligned with 4H bias";
-       r.nextCondition = "Wait for Daily structure to align.";
+    // === RELAXED FILTERS (Injected by AI) ===
+    if (r.daily.structure.trend !== r.bias && r.daily.structure.trend !== "SIDEWAYS / MIXED") {
+       r.reason = "FILTER: Daily trend is opposing the trade direction";
+       r.nextCondition = "Wait for Daily structure to change.";
        return;
     }
+
     const smc = r.executionFrame.smc || {};
-    if (r.bias === "BULLISH" && smc.premiumDiscount === "PREMIUM") {
-       r.reason = "STRICT FILTER: Do not buy in Premium zone";
-       r.nextCondition = "Wait for Discount pullback.";
+    // Allow Premium buy if it's a very strong setup
+    if (r.bias === "BULLISH" && smc.premiumDiscount === "PREMIUM" && smc.confluenceGrade !== "STRONG") {
+       r.reason = "FILTER: Buying in Premium zone without strong confluence";
+       r.nextCondition = "Wait for Discount pullback or stronger setup.";
        return;
     }
-    if (r.bias === "BEARISH" && smc.premiumDiscount === "DISCOUNT") {
-       r.reason = "STRICT FILTER: Do not sell in Discount zone";
-       r.nextCondition = "Wait for Premium pullback.";
+    if (r.bias === "BEARISH" && smc.premiumDiscount === "DISCOUNT" && smc.confluenceGrade !== "STRONG") {
+       r.reason = "FILTER: Selling in Discount zone without strong confluence";
+       r.nextCondition = "Wait for Premium pullback or stronger setup.";
        return;
     }
     // ====================================
@@ -461,16 +463,23 @@ class ModeAnalysisEngine {
     r.bias =
       d1.trend;
 
-    // === STRICT FILTERS (Injected by AI) ===
-    const smc = r.executionFrame.smc || {};
-    if (r.bias === "BULLISH" && smc.premiumDiscount === "PREMIUM") {
-       r.reason = "STRICT FILTER: Do not buy in Premium zone";
-       r.nextCondition = "Wait for Discount pullback.";
+    // === RELAXED FILTERS (Injected by AI) ===
+    if (r.daily.structure.trend !== r.bias && r.daily.structure.trend !== "SIDEWAYS / MIXED") {
+       r.reason = "FILTER: Daily trend is opposing the trade direction";
+       r.nextCondition = "Wait for Daily structure to change.";
        return;
     }
-    if (r.bias === "BEARISH" && smc.premiumDiscount === "DISCOUNT") {
-       r.reason = "STRICT FILTER: Do not sell in Discount zone";
-       r.nextCondition = "Wait for Premium pullback.";
+
+    const smc = r.executionFrame.smc || {};
+    // Allow Premium buy if it's a very strong setup
+    if (r.bias === "BULLISH" && smc.premiumDiscount === "PREMIUM" && smc.confluenceGrade !== "STRONG") {
+       r.reason = "FILTER: Buying in Premium zone without strong confluence";
+       r.nextCondition = "Wait for Discount pullback or stronger setup.";
+       return;
+    }
+    if (r.bias === "BEARISH" && smc.premiumDiscount === "DISCOUNT" && smc.confluenceGrade !== "STRONG") {
+       r.reason = "FILTER: Selling in Discount zone without strong confluence";
+       r.nextCondition = "Wait for Premium pullback or stronger setup.";
        return;
     }
     // ====================================
