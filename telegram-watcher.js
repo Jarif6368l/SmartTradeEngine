@@ -4451,16 +4451,8 @@ function startTelegramTradeWatcher({
       ""
     ).trim();
 
-  if (
-    !token ||
-    !chatId
-  ) {
-
-    console.log(
-      "[Telegram Watcher] Disabled — Telegram credentials missing"
-    );
-
-    return;
+  if (!token || !chatId) {
+    console.log("[Scanner] Running WITHOUT Telegram. Scanning will continue and signals will be emailed.");
   }
 
   if (
