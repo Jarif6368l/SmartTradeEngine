@@ -657,8 +657,7 @@ function isTwelveDataMarketTime(dateMs) {
     Number(p.hour);
 
   return (
-    hour >= 7 &&
-    hour < 24
+    hour >= 0 && hour < 24
   );
 }
 
@@ -5332,8 +5331,7 @@ const recoveryCounts = (results) => {
         );
 
       return (
-        hour >= 7 &&
-        hour < 24
+        hour >= 0 && hour < 24
       );
     };
 
