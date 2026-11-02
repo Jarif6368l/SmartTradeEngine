@@ -1,4 +1,5 @@
 require("dotenv").config();
+const { downloadFromCloud, uploadToCloud } = require("./cloud-sync");
 
 // === PROJECT VERSION (Identity Card) ===
 let VERSION_INFO = { project: "SmartTradeEngine", version: "unknown", signature: "unknown", buildDate: "unknown" };
@@ -13504,6 +13505,17 @@ app.get("/api/signal-history", (req, res) => {
     });
   }
 });
+
+
+// === CLOUD SYNC STARTUP ===
+downloadFromCloud().then(() => {
+  console.log("[Cloud Sync] Initial sync done. Starting server...");
+});
+
+// Auto-upload every 30 seconds
+setInterval(() => {
+  uploadToCloud();
+}, 30000);
 
 const server = app.listen(
   PORT,
