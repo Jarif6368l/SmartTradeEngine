@@ -7,10 +7,13 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const FILENAME = 'signal-history.json';
 
 async function downloadFromCloud() {
-  if (!GIST_ID || !GITHUB_TOKEN) return;
+  if (!GIST_ID || !GITHUB_TOKEN) {
+    console.log("[Cloud Sync] Missing GIST_ID or GITHUB_TOKEN.");
+    return;
+  }
   try {
     console.log("[Cloud Sync] Fetching history from GitHub Gist...");
-    const res = const uploadRes = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+    const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
       headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
     });
     const data = await res.json();
@@ -34,7 +37,7 @@ async function uploadToCloud() {
     const localData = fs.readFileSync(HISTORY_FILE, 'utf8');
     const parsed = JSON.parse(localData);
 
-    await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+    const uploadRes = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
       method: 'PATCH',
       headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -43,8 +46,15 @@ async function uploadToCloud() {
         }
       })
     });
+
+    if (uploadRes.ok) {
+      console.log(`[Cloud Sync] Uploaded ${parsed.length} signals successfully!`);
+    } else {
+      const err = await uploadRes.json();
+      console.log(`[Cloud Sync] Upload failed (Status: ${uploadRes.status}):`, err.message || "Unknown error");
+    }
   } catch (e) {
-    console.log("[Cloud Sync] Upload failed:", e.message);
+    console.log("[Cloud Sync] Upload error:", e.message);
   }
 }
 
