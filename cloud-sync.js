@@ -2,20 +2,25 @@ const fs = require('fs');
 const path = require('path');
 
 const HISTORY_FILE = path.join(__dirname, '.signal-history.json');
-const BIN_ID = process.env.JSONBIN_ID;
-const API_KEY = process.env.JSONBIN_KEY;
+const GIST_ID = process.env.GIST_ID;
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const FILENAME = 'signal-history.json';
 
 async function downloadFromCloud() {
-  if (!BIN_ID || !API_KEY) return;
+  if (!GIST_ID || !GITHUB_TOKEN) return;
   try {
-    console.log("[Cloud Sync] Fetching latest history from JSONBin...");
-    const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-      headers: { 'X-Master-Key': API_KEY }
+    console.log("[Cloud Sync] Fetching history from GitHub Gist...");
+    const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+      headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
     });
     const data = await res.json();
-    if (data.record && Array.isArray(data.record)) {
-      fs.writeFileSync(HISTORY_FILE, JSON.stringify(data.record, null, 2));
-      console.log(`[Cloud Sync] Downloaded ${data.record.length} signals from cloud!`);
+    if (data.files && data.files[FILENAME]) {
+      const content = data.files[FILENAME].content;
+      const parsed = JSON.parse(content);
+      if (Array.isArray(parsed)) {
+        fs.writeFileSync(HISTORY_FILE, JSON.stringify(parsed, null, 2));
+        console.log(`[Cloud Sync] Downloaded ${parsed.length} signals from Gist!`);
+      }
     }
   } catch (e) {
     console.log("[Cloud Sync] Download failed:", e.message);
@@ -23,19 +28,20 @@ async function downloadFromCloud() {
 }
 
 async function uploadToCloud() {
-  if (!BIN_ID || !API_KEY) return;
+  if (!GIST_ID || !GITHUB_TOKEN) return;
   try {
     if (!fs.existsSync(HISTORY_FILE)) return;
     const localData = fs.readFileSync(HISTORY_FILE, 'utf8');
     const parsed = JSON.parse(localData);
-    
-    await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Master-Key': API_KEY
-      },
-      body: JSON.stringify(parsed)
+
+    await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        files: {
+          [FILENAME]: { content: JSON.stringify(parsed, null, 2) }
+        }
+      })
     });
   } catch (e) {
     console.log("[Cloud Sync] Upload failed:", e.message);
