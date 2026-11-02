@@ -10,7 +10,7 @@ async function downloadFromCloud() {
   if (!GIST_ID || !GITHUB_TOKEN) return;
   try {
     console.log("[Cloud Sync] Fetching history from GitHub Gist...");
-    const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+    const res = const uploadRes = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
       headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
     });
     const data = await res.json();
