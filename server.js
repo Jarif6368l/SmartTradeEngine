@@ -13515,7 +13515,7 @@ downloadFromCloud().then(() => {
 // Auto-upload every 30 seconds
 setInterval(() => {
   uploadToCloud();
-}, 30000);
+}, 300000);
 
 const server = app.listen(
   PORT,
