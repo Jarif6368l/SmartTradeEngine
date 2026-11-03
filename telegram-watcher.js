@@ -177,6 +177,36 @@ const WATCH_MARKETS = [
     symbol: "ITC",
     type: "stocks",
     exchange: "NSE"
+  },
+  {
+    symbol: "BNB/USD",
+    type: "crypto",
+    exchange: "Binance"
+  },
+  {
+    symbol: "DOGE/USD",
+    type: "crypto",
+    exchange: "Binance"
+  },
+  {
+    symbol: "LINK/USD",
+    type: "crypto",
+    exchange: "Binance"
+  },
+  {
+    symbol: "USD/CAD",
+    type: "forex",
+    exchange: ""
+  },
+  {
+    symbol: "NZD/USD",
+    type: "forex",
+    exchange: ""
+  },
+  {
+    symbol: "USD/CHF",
+    type: "forex",
+    exchange: ""
   }
 ];
 
