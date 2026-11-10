@@ -3926,6 +3926,29 @@ async function scanMarket(
         legacyActive
     };
 
+  // === AUTO-RECOVERY: State lost after restart? Check History ===
+  if (!previous.historyId) {
+    try {
+      const allHistory = exportSignalHistory();
+      const orphanedActive = allHistory
+        .filter(r => String(r.symbol).toUpperCase() === String(market.symbol).toUpperCase() && String(r.status).toUpperCase() === 'ACTIVE')
+        .sort((a, b) => Date.parse(b.sentAt) - Date.parse(a.sentAt))[0];
+      
+      if (orphanedActive) {
+        previous.active = true;
+        previous.historyId = orphanedActive.id;
+        previous.mode = orphanedActive.mode;
+        previous.quality = orphanedActive.setupQuality;
+        previous.rr1 = orphanedActive.rr1;
+        previous.rr2 = orphanedActive.rr2;
+        console.log(`[Recovery] Re-attached orphaned ACTIVE trade ${orphanedActive.id} for ${market.symbol} (${orphanedActive.mode})`);
+      }
+    } catch (e) {
+      console.error("[Recovery] Failed:", e.message);
+    }
+  }
+  // ===========================================================
+
 
   let outcomeRecord =
     null;
