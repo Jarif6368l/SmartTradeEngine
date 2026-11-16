@@ -1216,10 +1216,7 @@ class RiskEngine {
       return;
     }
 
-    if (
-      r.setupQuality <
-      55
-    ) {
+    if (r.setupQuality < 80) {
 
       r.decision =
         "WAIT";
