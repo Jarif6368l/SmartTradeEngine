@@ -309,8 +309,23 @@ class ModeAnalysisEngine {
     }
 
 
-    r.decision =
-      "TRADE-CANDIDATE";
+    
+    // === SCALPING STRICT FILTERS (Added by AI) ===
+    const d1Trend = r.daily.structure.trend;
+    if (d1Trend !== r.bias && d1Trend !== "SIDEWAYS / MIXED") {
+      r.reason = "STRICT FILTER: 1D trend is opposing the scalping direction";
+      r.nextCondition = "Wait for Daily structure to align.";
+      return;
+    }
+    
+    if (r.m15.smc.confluenceGrade === "WEAK" || r.m15.smc.confluenceGrade === "INCOMPLETE") {
+      r.reason = "STRICT FILTER: SMC confluence is too weak for scalping";
+      r.nextCondition = "Wait for a stronger SMC setup.";
+      return;
+    }
+    // ===============================
+
+    r.decision = "TRADE-CANDIDATE";
 
     r.reason =
       "Scalping: 1H direction and 15m execution are aligned; 4H structure is not directly opposing. Daily alignment is assessed separately.";
