@@ -3126,14 +3126,10 @@ function trackSignalOutcome(
     }
 
 
-    const entryRef = Number(record.entryReference);
-    const breakevenActive = Boolean(t1HitAt) && Number.isFinite(entryRef) && entryRef > 0;
-    const effectiveSL = breakevenActive ? entryRef : stopLoss;
-
     const hitSL =
       bullish
-        ? low <= effectiveSL
-        : high >= effectiveSL;
+        ? low <= stopLoss
+        : high >= stopLoss;
 
     const hitT1 =
       bullish
@@ -3332,7 +3328,7 @@ function trackSignalOutcome(
 
           closedReason:
             t1HitAt
-              ? "Stop Loss moved to breakeven after T1 was hit; closed at entry"
+              ? "Stop reached after Target 1 had already been touched"
               : "Stop Loss reached",
 
           highestPriceSeen:
@@ -3346,24 +3342,19 @@ function trackSignalOutcome(
 
           outcomeR:
             t1HitAt
-              ? 0
+              ? null
               : -1,
 
-          breakevenAppliedAt:
-            t1HitAt || null,
-
           slReason:
-            t1HitAt
-              ? "Target 1 was hit earlier; Stop Loss was moved to breakeven and price returned to entry."
-              : deriveSlReason(
-                  {
-                    direction: record.direction,
-                    stopLoss: record.stopLoss,
-                    t1HitAt,
-                    invalidation: record.invalidation
-                  },
-                  { symbol: record.symbol, type: record.marketType || "", exchange: record.exchange || "" }
-                ),
+            deriveSlReason(
+              {
+                direction: record.direction,
+                stopLoss: record.stopLoss,
+                t1HitAt,
+                invalidation: record.invalidation
+              },
+              { symbol: record.symbol, type: record.marketType || "", exchange: record.exchange || "" }
+            ),
 
           durationMinutes:
             Math.max(
