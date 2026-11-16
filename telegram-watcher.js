@@ -3342,8 +3342,16 @@ function trackSignalOutcome(
 
           outcomeR:
             t1HitAt
-              ? null
+              ? 1.5
               : -1,
+
+          outcome:
+            t1HitAt
+              ? "T1_HIT"
+              : "SL_HIT",
+
+          status:
+            "INACTIVE",
 
           slReason:
             deriveSlReason(
