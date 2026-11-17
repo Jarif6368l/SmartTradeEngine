@@ -24,7 +24,6 @@ const extracted = [
   "candleTimeMs",
   "shouldEvaluateOutcomeCandle",
   "terminalOutcome",
-  "isClosedOutcomeRecord",
   "calculateTheoreticalMaxR",
   "isAmbiguousOutcomeCandle",
   "trackSignalOutcome"
