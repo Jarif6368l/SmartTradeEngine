@@ -2722,7 +2722,6 @@ function terminalOutcome(
 
   return [
     "T2_HIT",
-    "T1_HIT",
     "SL_HIT",
     "AMBIGUOUS",
     "INVALIDATED",
@@ -2731,14 +2730,6 @@ function terminalOutcome(
   ].includes(
     String(outcome || "")
       .toUpperCase()
-  );
-}
-
-function isClosedOutcomeRecord(record) {
-  return Boolean(
-    record &&
-    String(record.status || "").toUpperCase() === "INACTIVE" &&
-    terminalOutcome(record.outcome)
   );
 }
 
@@ -2892,9 +2883,9 @@ function trackSignalOutcome(
 
   if (
     !record ||
-    isClosedOutcomeRecord(record) ||
-    (terminalOutcome(record.outcome) &&
-      String(record.outcome || "").toUpperCase() !== "T1_HIT")
+    terminalOutcome(
+      record.outcome
+    )
   ) {
     return record;
   }
@@ -3349,16 +3340,15 @@ function trackSignalOutcome(
           maxRReached:
             maxR,
 
-          /*
-           * A later stop touch closes the signal as SL_HIT.
-           * T1 remains recorded separately; realized R is
-           * unknown without broker fill/position data.
-           */
           outcomeR:
-            null,
+            t1HitAt
+              ? 1.5
+              : -1,
 
           outcome:
-            "SL_HIT",
+            t1HitAt
+              ? "T1_HIT"
+              : "SL_HIT",
 
           status:
             "INACTIVE",
@@ -4060,7 +4050,11 @@ async function scanMarket(
     Boolean(
       previous.active &&
       outcomeRecord &&
-      isClosedOutcomeRecord(outcomeRecord)
+      outcomeRecord.status ===
+        "INACTIVE" &&
+      terminalOutcome(
+        outcomeRecord.outcome
+      )
     );
 
 
@@ -6135,8 +6129,6 @@ module.exports = {
   shouldEvaluateOutcomeCandle,
   isAmbiguousOutcomeCandle,
   calculateTheoreticalMaxR,
-  terminalOutcome,
-  isClosedOutcomeRecord,
   runWatcherTickExclusive,
   normalizeMarketIndex,
   readStateFromPaths,
