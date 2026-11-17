@@ -3349,15 +3349,16 @@ function trackSignalOutcome(
           maxRReached:
             maxR,
 
+          /*
+           * A later stop touch closes the signal as SL_HIT.
+           * T1 remains recorded separately; realized R is
+           * unknown without broker fill/position data.
+           */
           outcomeR:
-            t1HitAt
-              ? 1.5
-              : -1,
+            null,
 
           outcome:
-            t1HitAt
-              ? "T1_HIT"
-              : "SL_HIT",
+            "SL_HIT",
 
           status:
             "INACTIVE",
