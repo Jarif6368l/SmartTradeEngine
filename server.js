@@ -1,5 +1,5 @@
 require("dotenv").config();
-const { downloadFromCloud, uploadToCloud, isCloudSyncConfigured } = require("./cloud-sync");
+const { downloadFromCloud, uploadToCloud } = require("./cloud-sync");
 
 // === PROJECT VERSION (Identity Card) ===
 let VERSION_INFO = { project: "SmartTradeEngine", version: "unknown", signature: "unknown", buildDate: "unknown" };
@@ -13507,39 +13507,30 @@ app.get("/api/signal-history", (req, res) => {
 });
 
 
-// === RUNTIME STARTUP (RESTORE BEFORE WATCHER WRITES) ===
-async function startRuntime() {
-  const cloudConfigured = isCloudSyncConfigured();
-  const restore = await downloadFromCloud();
+// === CLOUD SYNC STARTUP ===
+downloadFromCloud().then(() => {
+  console.log("[Cloud Sync] Initial sync done. Starting server...");
+});
 
-  if (cloudConfigured && !restore.ok) {
-    console.error("[Startup] Cloud restore failed; Telegram watcher and cloud uploads are paused to protect signal history.");
-  } else {
-    console.log("[Cloud Sync] Initial restore complete. Starting Telegram watcher.");
-    startTelegramTradeWatcher({
-      fetchTwelveCandles: fetchMarketCandles
-    });
+// Auto-upload every 30 seconds
+setInterval(() => {
+  uploadToCloud();
+}, 300000);
 
-    if (cloudConfigured) {
-      const cloudUploadTimer = setInterval(() => {
-        uploadToCloud().catch(error => {
-          console.error("[Cloud Sync] Scheduled upload error:", error.message);
-        });
-      }, 5 * 60 * 1000);
-      cloudUploadTimer.unref?.();
-    }
+const server = app.listen(
+  PORT,
+  HOST,
+  () => {
+
+    console.log(
+      `AI Trading Analyst Web running on http://${HOST}:${PORT}`
+    );
   }
+);
 
-  const server = app.listen(PORT, HOST, () => {
-    console.log(`AI Trading Analyst Web running on http://${HOST}:${PORT}`);
-  });
 
-  return server;
-}
-
-startRuntime().catch(error => {
-  console.error("[Startup] Runtime initialization failed:", error);
-  process.exitCode = 1;
+startTelegramTradeWatcher({
+  fetchTwelveCandles: fetchMarketCandles
 });
 
 
