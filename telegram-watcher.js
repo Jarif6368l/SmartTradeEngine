@@ -6130,6 +6130,7 @@ module.exports = {
   shouldEvaluateOutcomeCandle,
   isAmbiguousOutcomeCandle,
   calculateTheoreticalMaxR,
+  terminalOutcome,
   runWatcherTickExclusive,
   normalizeMarketIndex,
   readStateFromPaths,
