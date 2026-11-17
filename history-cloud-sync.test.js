@@ -4,7 +4,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const { mergeHistory, isCloudSyncConfigured } = require("./cloud-sync");
-const { terminalOutcome } = require("./telegram-watcher");
+const { terminalOutcome, isClosedOutcomeRecord } = require("./telegram-watcher");
 
 test("T1_HIT is a terminal outcome after the record has been closed", () => {
   assert.equal(terminalOutcome("T1_HIT"), true);
@@ -12,10 +12,11 @@ test("T1_HIT is a terminal outcome after the record has been closed", () => {
   assert.equal(terminalOutcome("T2_HIT"), true);
 });
 
-test("active T1 tracking remains a non-terminal record state", () => {
-  // T1_HIT can be recorded while the signal remains ACTIVE; the watcher
-  // uses the record status guard to distinguish that state from a closed T1.
-  assert.equal(terminalOutcome("T1_HIT"), true);
+test("T1 touch remains active until the record is explicitly closed", () => {
+  assert.equal(isClosedOutcomeRecord({ status: "ACTIVE", outcome: "T1_HIT" }), false);
+  assert.equal(isClosedOutcomeRecord({ status: "INACTIVE", outcome: "T1_HIT" }), true);
+  assert.equal(isClosedOutcomeRecord({ status: "INACTIVE", outcome: "SL_HIT" }), true);
+  assert.equal(isClosedOutcomeRecord({ status: "ACTIVE", outcome: "SL_HIT" }), false);
 });
 
 test("cloud/local history merge keeps unique records and newest version per id", () => {
