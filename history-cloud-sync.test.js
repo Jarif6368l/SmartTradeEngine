@@ -32,7 +32,7 @@ test("cloud/local history merge keeps unique records and newest version per id",
   const merged = mergeHistory(local, cloud);
   assert.equal(merged.length, 3);
   assert.equal(merged.find(row => row.id === "a").outcome, "T2_HIT");
-  assert.deepEqual(merged.map(row => row.id), ["b", "a", "c"]);
+  assert.deepEqual(merged.map(row => row.id), ["a", "b", "c"]);
 });
 
 test("cloud merge is safe for empty histories", () => {
