@@ -2734,6 +2734,14 @@ function terminalOutcome(
   );
 }
 
+function isClosedOutcomeRecord(record) {
+  return Boolean(
+    record &&
+    String(record.status || "").toUpperCase() === "INACTIVE" &&
+    terminalOutcome(record.outcome)
+  );
+}
+
 
 function calculateTheoreticalMaxR(
   record,
@@ -2884,7 +2892,7 @@ function trackSignalOutcome(
 
   if (
     !record ||
-    String(record.status || "").toUpperCase() === "INACTIVE" ||
+    isClosedOutcomeRecord(record) ||
     (terminalOutcome(record.outcome) &&
       String(record.outcome || "").toUpperCase() !== "T1_HIT")
   ) {
@@ -4051,11 +4059,7 @@ async function scanMarket(
     Boolean(
       previous.active &&
       outcomeRecord &&
-      outcomeRecord.status ===
-        "INACTIVE" &&
-      terminalOutcome(
-        outcomeRecord.outcome
-      )
+      isClosedOutcomeRecord(outcomeRecord)
     );
 
 
@@ -6131,6 +6135,7 @@ module.exports = {
   isAmbiguousOutcomeCandle,
   calculateTheoreticalMaxR,
   terminalOutcome,
+  isClosedOutcomeRecord,
   runWatcherTickExclusive,
   normalizeMarketIndex,
   readStateFromPaths,
