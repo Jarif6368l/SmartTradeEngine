@@ -2722,6 +2722,7 @@ function terminalOutcome(
 
   return [
     "T2_HIT",
+    "T1_HIT",
     "SL_HIT",
     "AMBIGUOUS",
     "INVALIDATED",
@@ -2883,9 +2884,9 @@ function trackSignalOutcome(
 
   if (
     !record ||
-    terminalOutcome(
-      record.outcome
-    )
+    String(record.status || "").toUpperCase() === "INACTIVE" ||
+    (terminalOutcome(record.outcome) &&
+      String(record.outcome || "").toUpperCase() !== "T1_HIT")
   ) {
     return record;
   }
