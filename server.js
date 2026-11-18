@@ -1,4 +1,5 @@
 require("dotenv").config();
+const crypto = require("crypto");
 const { downloadFromCloud, uploadToCloud } = require("./cloud-sync");
 
 // === PROJECT VERSION (Identity Card) ===
@@ -540,6 +541,46 @@ function saveUpstoxToken(
 loadUpstoxToken();
 
 
+/* === UPSTOX OAUTH STATE (CSRF PROTECTION) === */
+const UPSTOX_OAUTH_STATE_COOKIE = "upstox_oauth_state";
+
+function isSecureRequest(req) {
+  return Boolean(req.secure || String(req.headers["x-forwarded-proto"] || "").split(",")[0].trim() === "https");
+}
+
+function readRequestCookie(req, name) {
+  const prefix = name + "=";
+  const cookies = String(req.headers.cookie || "").split(";");
+  for (const part of cookies) {
+    const cookie = part.trim();
+    if (cookie.startsWith(prefix)) {
+      try { return decodeURIComponent(cookie.slice(prefix.length)); } catch { return ""; }
+    }
+  }
+  return "";
+}
+
+function setUpstoxStateCookie(res, state, secure) {
+  res.setHeader("Set-Cookie",
+    `${UPSTOX_OAUTH_STATE_COOKIE}=${encodeURIComponent(state)}; HttpOnly; SameSite=Lax; Path=/api/upstox/callback; Max-Age=600${secure ? "; Secure" : ""}`);
+}
+
+function clearUpstoxStateCookie(res, secure) {
+  res.setHeader("Set-Cookie",
+    `${UPSTOX_OAUTH_STATE_COOKIE}=; HttpOnly; SameSite=Lax; Path=/api/upstox/callback; Max-Age=0${secure ? "; Secure" : ""}`);
+}
+
+function validUpstoxOAuthState(expected, supplied) {
+  if (typeof expected !== "string" || typeof supplied !== "string" ||
+      !/^[a-f0-9]{64}$/.test(expected) || !/^[a-f0-9]{64}$/.test(supplied)) {
+    return false;
+  }
+  const expectedBuffer = Buffer.from(expected, "hex");
+  const suppliedBuffer = Buffer.from(supplied, "hex");
+  return expectedBuffer.length === suppliedBuffer.length &&
+    crypto.timingSafeEqual(expectedBuffer, suppliedBuffer);
+}
+
 /* === UPSTOX OAUTH === */
 
 app.get(
@@ -570,11 +611,15 @@ app.get(
         });
     }
 
+    const state = crypto.randomBytes(32).toString("hex");
+    setUpstoxStateCookie(res, state, isSecureRequest(req));
+
     const params =
       new URLSearchParams({
         response_type: "code",
         client_id: clientId,
-        redirect_uri: redirectUri
+        redirect_uri: redirectUri,
+        state
       });
 
     res.redirect(
@@ -590,6 +635,15 @@ app.get(
   async (req, res) => {
 
     try {
+
+      const secureCookie = isSecureRequest(req);
+      const expectedState = readRequestCookie(req, UPSTOX_OAUTH_STATE_COOKIE);
+      const suppliedState = typeof req.query.state === "string" ? req.query.state : "";
+      clearUpstoxStateCookie(res, secureCookie);
+
+      if (!validUpstoxOAuthState(expectedState, suppliedState)) {
+        return res.status(403).send("Upstox authorization state validation failed. Please restart the connection flow.");
+      }
 
       const code =
         String(
