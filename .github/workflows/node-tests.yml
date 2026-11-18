@@ -1,4 +1,4 @@
-name: Node.js tests
+name: Node.js tests and dependency audit
 
 on:
   push:
@@ -13,11 +13,37 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20, 24]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: ${{ matrix.node-version }}
           cache: npm
       - run: npm ci
       - run: npm test
+      - name: Report dependency vulnerabilities
+        if: matrix.node-version == 24
+        shell: bash
+        run: |
+          npm audit --json > npm-audit.json || true
+          node -e '
+            const report = require("./npm-audit.json");
+            const meta = report.metadata?.vulnerabilities || {};
+            console.log("npm audit summary:", JSON.stringify(meta));
+            for (const [name, item] of Object.entries(report.vulnerabilities || {})) {
+              console.log(JSON.stringify({
+                name,
+                severity: item.severity,
+                direct: item.isDirect,
+                range: item.range,
+                fixAvailable: item.fixAvailable,
+                via: item.via.map(v => typeof v === "string" ? v : {
+                  title: v.title, url: v.url, range: v.range
+                })
+              }));
+            }
+          '
