@@ -13580,20 +13580,19 @@ downloadFromCloud()
     startTelegramTradeWatcher({
       fetchTwelveCandles: fetchMarketCandles
     });
+
+    // Start periodic uploads only after the initial restore has completed.
+    const cloudUploadTimer = setInterval(() => {
+      uploadToCloud().catch(error => {
+        console.error("[Cloud Sync] Scheduled upload failed:", error.message);
+      });
+    }, 5 * 60 * 1000);
+    if (typeof cloudUploadTimer.unref === "function") cloudUploadTimer.unref();
   })
   .catch(error => {
     console.error("[Startup] Refusing to start without a verified history restore:", error.message);
     process.exitCode = 1;
   });
-
-// Upload cadence is five minutes; the upload routine prevents overlapping runs.
-const cloudUploadTimer = setInterval(() => {
-  uploadToCloud().catch(error => {
-    console.error("[Cloud Sync] Scheduled upload failed:", error.message);
-  });
-}, 5 * 60 * 1000);
-if (typeof cloudUploadTimer.unref === "function") cloudUploadTimer.unref();
-
 
 
 // === LIVE WS BRIDGE ===
