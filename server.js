@@ -1,5 +1,4 @@
 require("dotenv").config();
-const crypto = require("crypto");
 const { downloadFromCloud, uploadToCloud } = require("./cloud-sync");
 
 // === PROJECT VERSION (Identity Card) ===
@@ -541,46 +540,6 @@ function saveUpstoxToken(
 loadUpstoxToken();
 
 
-/* === UPSTOX OAUTH STATE (CSRF PROTECTION) === */
-const UPSTOX_OAUTH_STATE_COOKIE = "upstox_oauth_state";
-
-function isSecureRequest(req) {
-  return Boolean(req.secure || String(req.headers["x-forwarded-proto"] || "").split(",")[0].trim() === "https");
-}
-
-function readRequestCookie(req, name) {
-  const prefix = name + "=";
-  const cookies = String(req.headers.cookie || "").split(";");
-  for (const part of cookies) {
-    const cookie = part.trim();
-    if (cookie.startsWith(prefix)) {
-      try { return decodeURIComponent(cookie.slice(prefix.length)); } catch { return ""; }
-    }
-  }
-  return "";
-}
-
-function setUpstoxStateCookie(res, state, secure) {
-  res.setHeader("Set-Cookie",
-    `${UPSTOX_OAUTH_STATE_COOKIE}=${encodeURIComponent(state)}; HttpOnly; SameSite=Lax; Path=/api/upstox/callback; Max-Age=600${secure ? "; Secure" : ""}`);
-}
-
-function clearUpstoxStateCookie(res, secure) {
-  res.setHeader("Set-Cookie",
-    `${UPSTOX_OAUTH_STATE_COOKIE}=; HttpOnly; SameSite=Lax; Path=/api/upstox/callback; Max-Age=0${secure ? "; Secure" : ""}`);
-}
-
-function validUpstoxOAuthState(expected, supplied) {
-  if (typeof expected !== "string" || typeof supplied !== "string" ||
-      !/^[a-f0-9]{64}$/.test(expected) || !/^[a-f0-9]{64}$/.test(supplied)) {
-    return false;
-  }
-  const expectedBuffer = Buffer.from(expected, "hex");
-  const suppliedBuffer = Buffer.from(supplied, "hex");
-  return expectedBuffer.length === suppliedBuffer.length &&
-    crypto.timingSafeEqual(expectedBuffer, suppliedBuffer);
-}
-
 /* === UPSTOX OAUTH === */
 
 app.get(
@@ -611,15 +570,11 @@ app.get(
         });
     }
 
-    const state = crypto.randomBytes(32).toString("hex");
-    setUpstoxStateCookie(res, state, isSecureRequest(req));
-
     const params =
       new URLSearchParams({
         response_type: "code",
         client_id: clientId,
-        redirect_uri: redirectUri,
-        state
+        redirect_uri: redirectUri
       });
 
     res.redirect(
@@ -635,15 +590,6 @@ app.get(
   async (req, res) => {
 
     try {
-
-      const secureCookie = isSecureRequest(req);
-      const expectedState = readRequestCookie(req, UPSTOX_OAUTH_STATE_COOKIE);
-      const suppliedState = typeof req.query.state === "string" ? req.query.state : "";
-      clearUpstoxStateCookie(res, secureCookie);
-
-      if (!validUpstoxOAuthState(expectedState, suppliedState)) {
-        return res.status(403).send("Upstox authorization state validation failed. Please restart the connection flow.");
-      }
 
       const code =
         String(
@@ -13562,37 +13508,31 @@ app.get("/api/signal-history", (req, res) => {
 
 
 // === CLOUD SYNC STARTUP ===
-// Create the HTTP server before the async restore so the WebSocket bridge can
-// attach during module initialization. Do not accept traffic or start the
-// watcher until the persisted history has been restored.
-const server = require("http").createServer(app);
+downloadFromCloud().then(() => {
+  console.log("[Cloud Sync] Initial sync done. Starting server...");
+});
 
-downloadFromCloud()
-  .catch(error => {
-    console.error("[Cloud Sync] Initial restore failed; server startup aborted:", error.message);
-    throw error;
-  })
-  .then(() => {
-    console.log("[Cloud Sync] Initial restore complete. Starting server and watcher...");
-    server.listen(PORT, HOST, () => {
-      console.log(`AI Trading Analyst Web running on http://${HOST}:${PORT}`);
-    });
-    startTelegramTradeWatcher({
-      fetchTwelveCandles: fetchMarketCandles
-    });
+// Auto-upload every 30 seconds
+setInterval(() => {
+  uploadToCloud();
+}, 300000);
 
-    // Start periodic uploads only after the initial restore has completed.
-    const cloudUploadTimer = setInterval(() => {
-      uploadToCloud().catch(error => {
-        console.error("[Cloud Sync] Scheduled upload failed:", error.message);
-      });
-    }, 5 * 60 * 1000);
-    if (typeof cloudUploadTimer.unref === "function") cloudUploadTimer.unref();
-  })
-  .catch(error => {
-    console.error("[Startup] Refusing to start without a verified history restore:", error.message);
-    process.exitCode = 1;
-  });
+const server = app.listen(
+  PORT,
+  HOST,
+  () => {
+
+    console.log(
+      `AI Trading Analyst Web running on http://${HOST}:${PORT}`
+    );
+  }
+);
+
+
+startTelegramTradeWatcher({
+  fetchTwelveCandles: fetchMarketCandles
+});
+
 
 
 // === LIVE WS BRIDGE ===
