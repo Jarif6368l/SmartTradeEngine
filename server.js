@@ -13508,30 +13508,37 @@ app.get("/api/signal-history", (req, res) => {
 
 
 // === CLOUD SYNC STARTUP ===
-downloadFromCloud().then(() => {
-  console.log("[Cloud Sync] Initial sync done. Starting server...");
-});
+// Create the HTTP server before the async restore so the WebSocket bridge can
+// attach during module initialization. Do not accept traffic or start the
+// watcher until the persisted history has been restored.
+const server = require("http").createServer(app);
 
-// Auto-upload every 30 seconds
-setInterval(() => {
-  uploadToCloud();
-}, 300000);
+downloadFromCloud()
+  .catch(error => {
+    console.error("[Cloud Sync] Initial restore failed; server startup aborted:", error.message);
+    throw error;
+  })
+  .then(() => {
+    console.log("[Cloud Sync] Initial restore complete. Starting server and watcher...");
+    server.listen(PORT, HOST, () => {
+      console.log(`AI Trading Analyst Web running on http://${HOST}:${PORT}`);
+    });
+    startTelegramTradeWatcher({
+      fetchTwelveCandles: fetchMarketCandles
+    });
+  })
+  .catch(error => {
+    console.error("[Startup] Refusing to start without a verified history restore:", error.message);
+    process.exitCode = 1;
+  });
 
-const server = app.listen(
-  PORT,
-  HOST,
-  () => {
-
-    console.log(
-      `AI Trading Analyst Web running on http://${HOST}:${PORT}`
-    );
-  }
-);
-
-
-startTelegramTradeWatcher({
-  fetchTwelveCandles: fetchMarketCandles
-});
+// Upload cadence is five minutes; the upload routine prevents overlapping runs.
+const cloudUploadTimer = setInterval(() => {
+  uploadToCloud().catch(error => {
+    console.error("[Cloud Sync] Scheduled upload failed:", error.message);
+  });
+}, 5 * 60 * 1000);
+if (typeof cloudUploadTimer.unref === "function") cloudUploadTimer.unref();
 
 
 
