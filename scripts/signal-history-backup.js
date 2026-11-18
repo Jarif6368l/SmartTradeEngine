@@ -57,7 +57,7 @@ function backupHistory({ source, backupDir, now = new Date() }) {
   };
   atomicWrite(backupFile, raw);
   try {
-    atomicWrite(manifestFile, `${JSON.stringify(manifest, null, 2)}\\n`);
+    atomicWrite(manifestFile, `${JSON.stringify(manifest, null, 2)}\n`);
   } catch (error) {
     throw new Error(`Snapshot created but manifest write failed (${backupFile}): ${error.message}`);
   }
@@ -82,7 +82,7 @@ function restoreBackup({ backupFile, source, confirm = false, backupDir }) {
   verifyBackup(backupFile);
   if (fs.existsSync(source)) backupHistory({ source, backupDir });
   const { rows } = parseHistory(backupFile);
-  atomicWrite(source, `${JSON.stringify(rows, null, 2)}\\n`);
+  atomicWrite(source, `${JSON.stringify(rows, null, 2)}\n`);
   return { source, restoredRecordCount: rows.length };
 }
 
