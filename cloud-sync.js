@@ -66,7 +66,10 @@ function writeHistoryAtomic(rows) {
   validateHistoryRecords(rows);
   const directory = path.dirname(HISTORY_FILE);
   fs.mkdirSync(directory, { recursive: true });
-  const temp = `${HISTORY_FILE}.${process.pid}.${Date.now()}.tmp`;
+  const suffix = `${process.pid}.${Date.now()}`;
+  const temp = `${HISTORY_FILE}.${suffix}.tmp`;
+  const previous = `${HISTORY_FILE}.prev`;
+  const previousTemp = `${previous}.${suffix}.tmp`;
   let fd;
   try {
     fd = fs.openSync(temp, "wx", 0o600);
@@ -74,12 +77,23 @@ function writeHistoryAtomic(rows) {
     fs.fsyncSync(fd);
     fs.closeSync(fd);
     fd = undefined;
+
+    // Rotate only a valid current generation; never replace a good backup
+    // with a corrupt or partially written primary file.
+    if (fs.existsSync(HISTORY_FILE)) {
+      const current = JSON.parse(fs.readFileSync(HISTORY_FILE, "utf8"));
+      validateHistoryRecords(current);
+      fs.copyFileSync(HISTORY_FILE, previousTemp);
+      fs.renameSync(previousTemp, previous);
+    }
     fs.renameSync(temp, HISTORY_FILE);
   } catch (error) {
     if (fd !== undefined) {
       try { fs.closeSync(fd); } catch {}
     }
-    try { fs.unlinkSync(temp); } catch {}
+    for (const candidate of [temp, previousTemp]) {
+      try { fs.unlinkSync(candidate); } catch {}
+    }
     throw error;
   }
 }
