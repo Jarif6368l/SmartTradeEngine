@@ -3340,12 +3340,15 @@ function trackSignalOutcome(
           maxRReached:
             maxR,
 
-          // A prior T1 touch is not proof of a broker partial fill.
-          // Keep the terminal market event as SL_HIT and leave realized R unknown.
           outcomeR:
             t1HitAt
-              ? null
+              ? 1.5
               : -1,
+
+          outcome:
+            t1HitAt
+              ? "T1_HIT"
+              : "SL_HIT",
 
           status:
             "INACTIVE",
