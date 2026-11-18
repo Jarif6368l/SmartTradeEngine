@@ -46,6 +46,8 @@ const {
   getSignalHistoryStats,
   exportSignalHistory
 } = require("./signal-history");
+const { createPrivateHistoryApiAuth } = require("./private-history-api-auth");
+const requirePrivateHistoryApiAuth = createPrivateHistoryApiAuth();
 
 
 const app =
@@ -13506,7 +13508,7 @@ app.get(
 
 
 
-app.get('/api/notifications', (req, res) => {
+app.get('/api/notifications', requirePrivateHistoryApiAuth, (req, res) => {
   try {
     const file = path.join(__dirname, '.notifications.json');
     if (fs.existsSync(file)) {
@@ -13520,7 +13522,7 @@ app.get('/api/notifications', (req, res) => {
 });
 
 // Read-only signal history API.
-app.get("/api/signal-history/export", (req, res) => {
+app.get("/api/signal-history/export", requirePrivateHistoryApiAuth, (req, res) => {
   try {
     const history = exportSignalHistory();
     res.json({ ok: true, count: history.length, history });
@@ -13532,7 +13534,7 @@ app.get("/api/signal-history/export", (req, res) => {
   }
 });
 
-app.get("/api/signal-history/stats", (req, res) => {
+app.get("/api/signal-history/stats", requirePrivateHistoryApiAuth, (req, res) => {
   try {
     res.json({ ok: true, stats: getSignalHistoryStats() });
   } catch (error) {
@@ -13543,7 +13545,7 @@ app.get("/api/signal-history/stats", (req, res) => {
   }
 });
 
-app.get("/api/signal-history", (req, res) => {
+app.get("/api/signal-history", requirePrivateHistoryApiAuth, (req, res) => {
   try {
     const history = listSignalHistory({
       limit: req.query.limit,
