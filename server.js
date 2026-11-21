@@ -58,7 +58,7 @@ const PORT =
 const HOST =
   String(
     process.env.HOST ||
-    "127.0.0.1"
+    "0.0.0.0"
   ).trim() ||
   "127.0.0.1";
 
@@ -750,7 +750,8 @@ app.get(
         "ECB"
       ],
 
-      cacheMinutes: 10
+      cacheMinutes: 10,
+      twelveDataBudget: getTwelveDataBudgetStatus()
     });
   }
 );
@@ -1080,6 +1081,8 @@ async function fetchMarketReference(
     let response;
 
     try {
+
+      reserveTwelveDataCredit();
 
       response =
         await fetch(
@@ -12833,6 +12836,8 @@ async function fetchTwelveCandles(
 
   try {
 
+    reserveTwelveDataCredit();
+
     response =
       await fetch(
         "https://api.twelvedata.com/time_series?" +
@@ -13406,7 +13411,9 @@ app.get(
 
 const {
   startTelegramTradeWatcher,
-  getTelegramWatcherStatus
+  getTelegramWatcherStatus,
+  reserveTwelveDataCredit,
+  getTwelveDataBudgetStatus
 } = require("./telegram-watcher");
 
 
@@ -13508,30 +13515,41 @@ app.get("/api/signal-history", (req, res) => {
 
 
 // === CLOUD SYNC STARTUP ===
-downloadFromCloud().then(() => {
-  console.log("[Cloud Sync] Initial sync done. Starting server...");
-});
+// Restore before the watcher can create or upload new history. If a configured
+// cloud restore fails, keep the dashboard available but leave the watcher and
+// periodic uploads disabled to avoid overwriting the authoritative Gist.
+const server = require("http").createServer(app);
+const cloudSyncConfigured = Boolean(process.env.GIST_ID && process.env.GITHUB_TOKEN);
 
-// Auto-upload every 30 seconds
-setInterval(() => {
-  uploadToCloud();
-}, 300000);
+function listenApplicationServer() {
+  if (server.listening) return;
+  server.listen(PORT, HOST, () => {
+    console.log(`AI Trading Analyst Web running on http://${HOST}:${PORT}`);
+  });
+}
 
-const server = app.listen(
-  PORT,
-  HOST,
-  () => {
+downloadFromCloud()
+  .then(result => {
+    console.log("[Cloud Sync] Initial restore completed.", result || "");
+    listenApplicationServer();
 
-    console.log(
-      `AI Trading Analyst Web running on http://${HOST}:${PORT}`
-    );
-  }
-);
+    startTelegramTradeWatcher({
+      fetchTwelveCandles: fetchMarketCandles
+    });
 
-
-startTelegramTradeWatcher({
-  fetchTwelveCandles: fetchMarketCandles
-});
+    if (cloudSyncConfigured) {
+      const cloudUploadTimer = setInterval(() => {
+        uploadToCloud().catch(error => {
+          console.error("[Cloud Sync] Scheduled upload failed:", error.message);
+        });
+      }, 5 * 60 * 1000);
+      cloudUploadTimer.unref?.();
+    }
+  })
+  .catch(error => {
+    console.error("[Cloud Sync] Initial restore failed; watcher and uploads remain disabled:", error.message);
+    listenApplicationServer();
+  });
 
 
 
@@ -13691,6 +13709,8 @@ app.get(
       let response;
 
       try {
+
+        reserveTwelveDataCredit();
 
         response =
           await fetch(
@@ -14852,15 +14872,19 @@ function startClientUpstream(
 const browserWss =
   new WebSocketServer({
     server,
-
-    path:
-      "/live"
+    path: "/live",
+    maxPayload: 8192
   });
 
 
 browserWss.on(
   "connection",
   client => {
+
+    if (browserLiveClients.size >= 50) {
+      client.close(1013, "Live connection capacity reached");
+      return;
+    }
 
     browserLiveClients.add(
       client
