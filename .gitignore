@@ -47,3 +47,6 @@ public/chart-debug.html
 *.bak*
 *.py
 run.sh
+
+# Private runtime notifications
+.notifications.json
