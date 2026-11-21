@@ -41,3 +41,14 @@ test("atomic history writer produces parseable data and rotates the previous gen
   assert.deepEqual(JSON.parse(fs.readFileSync(process.env.SIGNAL_HISTORY_FILE + ".prev", "utf8")), first);
   assert.equal(fs.readdirSync(tempDir).some(name => name.endsWith(".tmp")), false);
 });
+
+test("history merge uses the newest valid timestamp field on each record", () => {
+  const local = [
+    { id: "timestamp", updatedAt: "2026-01-05T00:00:00Z", outcomeAt: "2026-01-01T00:00:00Z", outcome: "OPEN" }
+  ];
+  const remote = [
+    { id: "timestamp", updatedAt: "2026-01-04T00:00:00Z", outcomeAt: "2026-01-06T00:00:00Z", outcome: "SL_HIT" }
+  ];
+  const merged = cloud.mergeHistoryRecords(local, remote);
+  assert.equal(merged[0].outcome, "SL_HIT");
+});
