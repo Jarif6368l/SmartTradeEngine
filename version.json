@@ -1,9 +1,9 @@
 {
   "project": "SmartTradeEngine",
   "version": "1.0.0",
-  "buildDate": "2026-10-28",
-  "signature": "STE-STABLE-2026-10-28",
-  "status": "PRODUCTION-STABLE",
+  "buildDate": "2026-11-21",
+  "signature": "STE-SAFETY-HARDENING-2026-11-21",
+  "status": "SAFETY-HARDENING",
   "features": [
     "1D Alignment Strict Filter",
     "SMC Premium/Discount Filter",

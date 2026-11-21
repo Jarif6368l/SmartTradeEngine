@@ -47,8 +47,14 @@ const {
 } = require("./signal-history");
 
 
+const { createPrivateHistoryApiAuth } = require("./private-history-api-auth");
+const requirePrivateHistoryApiAuth = createPrivateHistoryApiAuth();
+
 const app =
   express();
+
+// Render terminates TLS at its proxy and forwards the original client address.
+app.set("trust proxy", 1);
 
 const PORT =
   process.env.PORT ||
@@ -58,9 +64,9 @@ const PORT =
 const HOST =
   String(
     process.env.HOST ||
-    "127.0.0.1"
+    "0.0.0.0"
   ).trim() ||
-  "127.0.0.1";
+  "0.0.0.0";
 
 const CACHE_TTL =
   10 * 60 * 1000;
@@ -750,7 +756,8 @@ app.get(
         "ECB"
       ],
 
-      cacheMinutes: 10
+      cacheMinutes: 10,
+      twelveDataBudget: getTwelveDataBudgetStatus()
     });
   }
 );
@@ -1080,6 +1087,8 @@ async function fetchMarketReference(
     let response;
 
     try {
+
+      reserveTwelveDataCredit();
 
       response =
         await fetch(
@@ -12833,6 +12842,8 @@ async function fetchTwelveCandles(
 
   try {
 
+    reserveTwelveDataCredit();
+
     response =
       await fetch(
         "https://api.twelvedata.com/time_series?" +
@@ -13406,7 +13417,9 @@ app.get(
 
 const {
   startTelegramTradeWatcher,
-  getTelegramWatcherStatus
+  getTelegramWatcherStatus,
+  reserveTwelveDataCredit,
+  getTwelveDataBudgetStatus
 } = require("./telegram-watcher");
 
 
@@ -13452,7 +13465,7 @@ app.get(
 
 
 
-app.get('/api/notifications', (req, res) => {
+app.get('/api/notifications', requirePrivateHistoryApiAuth, (req, res) => {
   try {
     const file = path.join(__dirname, '.notifications.json');
     if (fs.existsSync(file)) {
@@ -13466,7 +13479,7 @@ app.get('/api/notifications', (req, res) => {
 });
 
 // Read-only signal history API.
-app.get("/api/signal-history/export", (req, res) => {
+app.get("/api/signal-history/export", requirePrivateHistoryApiAuth, (req, res) => {
   try {
     const history = exportSignalHistory();
     res.json({ ok: true, count: history.length, history });
@@ -13478,7 +13491,7 @@ app.get("/api/signal-history/export", (req, res) => {
   }
 });
 
-app.get("/api/signal-history/stats", (req, res) => {
+app.get("/api/signal-history/stats", requirePrivateHistoryApiAuth, (req, res) => {
   try {
     res.json({ ok: true, stats: getSignalHistoryStats() });
   } catch (error) {
@@ -13489,7 +13502,7 @@ app.get("/api/signal-history/stats", (req, res) => {
   }
 });
 
-app.get("/api/signal-history", (req, res) => {
+app.get("/api/signal-history", requirePrivateHistoryApiAuth, (req, res) => {
   try {
     const history = listSignalHistory({
       limit: req.query.limit,
@@ -13508,30 +13521,41 @@ app.get("/api/signal-history", (req, res) => {
 
 
 // === CLOUD SYNC STARTUP ===
-downloadFromCloud().then(() => {
-  console.log("[Cloud Sync] Initial sync done. Starting server...");
-});
+// Restore before the watcher can create or upload new history. If a configured
+// cloud restore fails, keep the dashboard available but leave the watcher and
+// periodic uploads disabled to avoid overwriting the authoritative Gist.
+const server = require("http").createServer(app);
+const cloudSyncConfigured = Boolean(process.env.GIST_ID && process.env.GITHUB_TOKEN);
 
-// Auto-upload every 30 seconds
-setInterval(() => {
-  uploadToCloud();
-}, 300000);
+function listenApplicationServer() {
+  if (server.listening) return;
+  server.listen(PORT, HOST, () => {
+    console.log(`AI Trading Analyst Web running on http://${HOST}:${PORT}`);
+  });
+}
 
-const server = app.listen(
-  PORT,
-  HOST,
-  () => {
+downloadFromCloud()
+  .then(result => {
+    console.log("[Cloud Sync] Initial restore completed.", result || "");
+    listenApplicationServer();
 
-    console.log(
-      `AI Trading Analyst Web running on http://${HOST}:${PORT}`
-    );
-  }
-);
+    startTelegramTradeWatcher({
+      fetchTwelveCandles: fetchMarketCandles
+    });
 
-
-startTelegramTradeWatcher({
-  fetchTwelveCandles: fetchMarketCandles
-});
+    if (cloudSyncConfigured) {
+      const cloudUploadTimer = setInterval(() => {
+        uploadToCloud().catch(error => {
+          console.error("[Cloud Sync] Scheduled upload failed:", error.message);
+        });
+      }, 5 * 60 * 1000);
+      cloudUploadTimer.unref?.();
+    }
+  })
+  .catch(error => {
+    console.error("[Cloud Sync] Initial restore failed; watcher and uploads remain disabled:", error.message);
+    listenApplicationServer();
+  });
 
 
 
@@ -13691,6 +13715,8 @@ app.get(
       let response;
 
       try {
+
+        reserveTwelveDataCredit();
 
         response =
           await fetch(
@@ -14852,15 +14878,30 @@ function startClientUpstream(
 const browserWss =
   new WebSocketServer({
     server,
-
-    path:
-      "/live"
+    path: "/live",
+    maxPayload: 8192,
+    verifyClient: (info, done) => {
+      const origin = info.origin;
+      if (!origin) return done(true); // Permit non-browser clients without an Origin header.
+      try {
+        const originHost = new URL(origin).host.toLowerCase();
+        const requestHost = String(info.req.headers.host || "").toLowerCase();
+        return done(originHost === requestHost, 403, "Origin not allowed");
+      } catch {
+        return done(false, 403, "Invalid Origin");
+      }
+    }
   });
 
 
 browserWss.on(
   "connection",
   client => {
+
+    if (browserLiveClients.size >= 20) {
+      client.close(1013, "Live connection capacity reached");
+      return;
+    }
 
     browserLiveClients.add(
       client
@@ -14883,6 +14924,8 @@ browserWss.on(
 
     client._liveSubscription =
       null;
+
+    client._lastSubscriptionAt = 0;
 
 
     sendLiveToClient(
@@ -15070,6 +15113,17 @@ browserWss.on(
           return;
         }
 
+
+        const now = Date.now();
+        if (now - client._lastSubscriptionAt < 2000) {
+          sendLiveToClient(client, {
+            type: "status",
+            status: "error",
+            message: "Please wait before changing the live subscription again"
+          });
+          return;
+        }
+        client._lastSubscriptionAt = now;
 
         startClientUpstream(
           client,

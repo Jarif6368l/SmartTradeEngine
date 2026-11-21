@@ -1,0 +1,38 @@
+name: Node.js tests and dependency audit
+
+on:
+  push:
+    branches: [main, "fix/**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      - run: npm ci
+      - name: Check runtime and browser JavaScript syntax
+        run: |
+          node --check server.js
+          node --check telegram-watcher.js
+          node --check cloud-sync.js
+          node --check private-history-api-auth.js
+          node --check twelve-data-budget.js
+          node --check public/history.js
+      - run: npm test
+      - name: Require no moderate-or-higher dependency vulnerabilities
+        if: matrix.node-version == 24
+        run: npm audit --audit-level=moderate

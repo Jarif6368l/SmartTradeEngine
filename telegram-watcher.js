@@ -1,5 +1,11 @@
 const fs = require("fs");
 const path = require("path");
+const {
+  DAILY_CREDIT_BUDGET,
+  getBudgetStatus,
+  reserveCredit,
+  rolloverIfNeeded
+} = require("./twelve-data-budget");
 const vm = require("vm");
 const {
   execFileSync
@@ -254,24 +260,30 @@ const ROTATION_MS =
     ) || 4 * 60 * 1000
   );
 
-const DAILY_CREDIT_BUDGET =
-  Math.max(
-    100,
-    Number(
-      process.env.TELEGRAM_WATCH_DAILY_CREDIT_BUDGET
-    ) || 600
-  );
+// Hard application-wide ceiling. It is intentionally not environment-overridable.
+
+
+const LEGACY_STATE_FILE =
+  path.join(__dirname, ".telegram-watcher-state.json");
 
 const STATE_FILE =
-  path.join(
-    __dirname,
-    ".telegram-watcher-state.json"
-  );
-
-
+  process.env.TELEGRAM_WATCH_STATE_FILE
+    ? path.resolve(process.env.TELEGRAM_WATCH_STATE_FILE)
+    : LEGACY_STATE_FILE;
 
 const STATE_PREV_FILE =
   `${STATE_FILE}.prev`;
+
+// When moving to a Render persistent disk, migrate the previous local
+// counter once so the deployment does not receive a fresh 600-credit budget.
+if (
+  STATE_FILE !== LEGACY_STATE_FILE &&
+  !fs.existsSync(STATE_FILE) &&
+  fs.existsSync(LEGACY_STATE_FILE)
+) {
+  fs.mkdirSync(path.dirname(STATE_FILE), { recursive: true });
+  fs.copyFileSync(LEGACY_STATE_FILE, STATE_FILE);
+}
 const frameCache =
   new Map();
 
@@ -371,7 +383,8 @@ function getTelegramWatcherStatus() {
       watcherHealth.lastTickCompletedAt,
     lastTickError:
       watcherHealth.lastTickError,
-    marketIndex
+    marketIndex,
+    twelveDataBudget: getTwelveDataBudgetStatus()
   };
 }
 
@@ -505,12 +518,10 @@ function normalizeMarketIndex(
 function defaultState() {
 
   return {
-    day:
-      new Date()
-        .toISOString()
-        .slice(0, 10),
+    day: currentIstDay(),
 
     watcherCredits: 0,
+    lastCreditAt: null,
 
 
     marketIndex: 0,
@@ -866,29 +877,11 @@ marketIndex =
 watcherState.marketIndex =
   marketIndex;
 
-function getApiKeyHash() {
-  const key = String(process.env.TWELVE_DATA_API_KEY || "");
-  if (!key) return "no-key";
-  return require("crypto").createHash("md5").update(key).digest("hex").slice(0, 8);
-}
-
 function resetDailyBudgetIfNeeded() {
-  const today = new Date().toISOString().slice(0, 10);
-  const currentKeyHash = getApiKeyHash();
-  let resetReason = null;
-
-  if (watcherState.day !== today) {
-    resetReason = "New day";
-  } else if (watcherState.keyHash !== currentKeyHash) {
-    resetReason = "New API key detected";
-  }
-
-  if (resetReason) {
-    watcherState.day = today;
-    watcherState.watcherCredits = 0;
-    watcherState.keyHash = currentKeyHash;
+  const previousDay = watcherState.day;
+  if (rolloverIfNeeded(watcherState)) {
     saveState();
-    console.log("[Scanner] Budget auto-reset: " + resetReason);
+    console.log("[Scanner] Twelve Data budget day: " + previousDay + " -> " + watcherState.day);
   }
 }
 
@@ -897,6 +890,8 @@ function writeStateAtomic(
   filePath,
   state
 ) {
+
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
 
   const tmpFile =
     `${filePath}.tmp`;
@@ -1213,13 +1208,38 @@ function normalizeCandles(raw) {
 
 
 function budgetAvailable() {
+  resetDailyBudgetIfNeeded();
+  return getBudgetStatus(watcherState).remaining > 0;
+}
 
+function reserveTwelveDataCredit() {
   resetDailyBudgetIfNeeded();
 
-  return (
-    watcherState.watcherCredits <
-    DAILY_CREDIT_BUDGET
-  );
+  const previous = {
+    day: watcherState.day,
+    watcherCredits: watcherState.watcherCredits,
+    lastCreditAt: watcherState.lastCreditAt
+  };
+
+  const status = reserveCredit(watcherState);
+  watcherState.marketIndex = normalizeMarketIndex(marketIndex);
+
+  try {
+    // A credit is not spent until its reservation is durably written.
+    writeStateAtomic(STATE_FILE, watcherState);
+  } catch (error) {
+    watcherState.day = previous.day;
+    watcherState.watcherCredits = previous.watcherCredits;
+    watcherState.lastCreditAt = previous.lastCreditAt;
+    throw new Error("Twelve Data budget ledger could not be persisted; request blocked: " + error.message);
+  }
+
+  return status;
+}
+
+function getTwelveDataBudgetStatus() {
+  resetDailyBudgetIfNeeded();
+  return getBudgetStatus(watcherState);
 }
 
 
@@ -1296,16 +1316,16 @@ async function maybeNotifyBudgetExhausted() {
     }
 
     const text = [
-      "⚠️ TWELVE DATA WATCHER BUDGET EXHAUSTED",
+      "⚠️ TWELVE DATA DAILY REST BUDGET EXHAUSTED",
       "",
       "Used: " +
         watcherState.watcherCredits +
         "/" +
         DAILY_CREDIT_BUDGET,
-      "Crypto/Forex watcher scanning paused.",
+      "All Twelve Data REST requests are paused until the next IST day.",
       "Daily watcher budget will reset on the next day.",
       "",
-      "Note: This is the app's daily watcher safety cap, not the Twelve Data provider's own account limit."
+      "Note: This is the app's fixed 600-credit daily safety cap, not the provider's separate plan quota."
     ].join("\n");
 
     try {
@@ -1343,15 +1363,6 @@ async function maybeNotifyBudgetExhausted() {
       error.message
     );
   }
-}
-
-
-function spendCredit() {
-
-  resetDailyBudgetIfNeeded();
-
-  watcherState.watcherCredits +=
-    1;
 }
 
 
@@ -1409,10 +1420,6 @@ async function fetchFrame(
     throw new Error(
       "Watcher daily API credit budget reached"
     );
-  }
-
-  if (usesWatcherCredit) {
-    spendCredit();
   }
 
   const result =
@@ -3340,15 +3347,15 @@ function trackSignalOutcome(
           maxRReached:
             maxR,
 
+          // A T1 price touch is not proof of a broker partial fill.
+          // The terminal market event remains SL_HIT; realized R is unknown.
           outcomeR:
             t1HitAt
-              ? 1.5
+              ? null
               : -1,
 
           outcome:
-            t1HitAt
-              ? "T1_HIT"
-              : "SL_HIT",
+            "SL_HIT",
 
           status:
             "INACTIVE",
@@ -6134,5 +6141,7 @@ module.exports = {
   readStateFromPaths,
   writeStateAtomic,
   fetchWithTimeout,
-  getTelegramWatcherStatus
+  getTelegramWatcherStatus,
+  reserveTwelveDataCredit,
+  getTwelveDataBudgetStatus
 };

@@ -6,6 +6,26 @@
         id
       );
 
+  async function fetchPrivateHistory(url, options = {}) {
+    const tokenKey = "STE_HISTORY_API_TOKEN";
+    const headers = new Headers(options.headers || {});
+    let token = sessionStorage.getItem(tokenKey) || "";
+    if (token) headers.set("Authorization", "Bearer " + token);
+
+    let response = await fetch(url, { ...options, headers });
+    if (response.status === 401) {
+      sessionStorage.removeItem(tokenKey);
+      const entered = window.prompt("Enter the Render SIGNAL_HISTORY_API_TOKEN to access private signal history:");
+      if (entered && entered.trim()) {
+        token = entered.trim();
+        sessionStorage.setItem(tokenKey, token);
+        headers.set("Authorization", "Bearer " + token);
+        response = await fetch(url, { ...options, headers });
+      }
+    }
+    return response;
+  }
+
   let allHistory = [];
 
   const expandedSignalIds = new Set();
@@ -1946,7 +1966,7 @@ body.classList.toggle(
     try {
 
       const response =
-        await fetch(
+        await fetchPrivateHistory(
           "/api/signal-history/stats",
           {
             cache:
@@ -2091,7 +2111,7 @@ body.classList.toggle(
     try {
 
       const response =
-        await fetch(
+        await fetchPrivateHistory(
           "/api/signal-history?limit=500",
           {
             cache:

@@ -47,3 +47,7 @@ public/chart-debug.html
 *.bak*
 *.py
 run.sh
+
+# Runtime notifications and temporary atomic-write files
+.notifications.json
+*.tmp
