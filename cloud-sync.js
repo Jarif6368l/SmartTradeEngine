@@ -14,6 +14,16 @@ const GIST_URL = GIST_ID ? `https://api.github.com/gists/${GIST_ID}` : null;
 let downloadInFlight = null;
 let uploadInFlight = null;
 
+async function fetchWithTimeout(url, options = {}, timeoutMs = 15000) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 function validateHistoryRecords(value) {
   if (!Array.isArray(value)) {
     throw new TypeError("Signal history backup must be a JSON array");
@@ -130,7 +140,7 @@ async function readGistHistory(gist) {
   const file = gist.files[filename];
   let content = file.content;
   if (file.truncated && file.raw_url) {
-    const rawResponse = await fetch(file.raw_url, { headers: authHeaders() });
+    const rawResponse = await fetchWithTimeout(file.raw_url, { headers: authHeaders() });
     if (!rawResponse.ok) throw new Error(`Gist raw file download failed (HTTP ${rawResponse.status})`);
     content = await rawResponse.text();
   }
@@ -146,7 +156,7 @@ async function downloadFromCloud() {
   }
   if (downloadInFlight) return downloadInFlight;
   downloadInFlight = (async () => {
-    const response = await fetch(GIST_URL, { headers: authHeaders() });
+    const response = await fetchWithTimeout(GIST_URL, { headers: authHeaders() });
     const gist = await responseJson(response, "Gist download");
     const remote = await readGistHistory(gist);
     if (!remote.filename) {
@@ -175,11 +185,14 @@ async function uploadToCloud() {
   }
   if (uploadInFlight) return uploadInFlight;
   uploadInFlight = (async () => {
-    const rows = readLocalHistory();
-    const getResponse = await fetch(GIST_URL, { headers: authHeaders() });
+    const local = readLocalHistory();
+    const getResponse = await fetchWithTimeout(GIST_URL, { headers: authHeaders() });
     const gist = await responseJson(getResponse, "Gist lookup before upload");
-    const filename = chooseGistFile(gist.files) || CANONICAL_FILENAME;
-    const response = await fetch(GIST_URL, {
+    const remote = await readGistHistory(gist);
+    const rows = remote.rows ? mergeHistoryRecords(local, remote.rows) : local;
+    if (remote.rows) writeHistoryAtomic(rows);
+    const filename = remote.filename || CANONICAL_FILENAME;
+    const response = await fetchWithTimeout(GIST_URL, {
       method: "PATCH",
       headers: authHeaders(true),
       body: JSON.stringify({ files: { [filename]: { content: JSON.stringify(rows, null, 2) } } })
