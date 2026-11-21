@@ -2,15 +2,23 @@ plugins {
     id 'com.android.application'
 }
 
+def configuredServerUrl = (project.findProperty("SMARTTRADE_SERVER_URL") ?: System.getenv("SMARTTRADE_SERVER_URL") ?: "").toString()
+def escapedServerUrl = configuredServerUrl.replace("\\", "\\\\").replace('"', '\\"')
+
 android {
     namespace 'com.smarttradeengine.app'
     compileSdk 35
 
+    buildFeatures {
+        buildConfig true
+    }
+
     defaultConfig {
         applicationId 'com.smarttradeengine.app'
         minSdk 23
-        targetSdk 28
-        versionCode 1
-        versionName '1.0'
+        targetSdk 35
+        versionCode 2
+        versionName '1.0.1'
+        buildConfigField 'String', 'SERVER_URL', '"' + escapedServerUrl + '"'
     }
 }

@@ -47,3 +47,9 @@ public/chart-debug.html
 *.bak*
 *.py
 run.sh
+
+# Private runtime notifications
+.notifications.json*
+
+# Local signal-history recovery snapshots
+recovery-history/

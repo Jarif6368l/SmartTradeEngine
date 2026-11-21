@@ -1588,8 +1588,19 @@ function renderWhySignal(analysis, frames, mode, symbol) {
 
 function renderWhySignalBody(body, why) {
 
-  const safe = v =>
-    (v === undefined || v === null || v === "") ? "—" : String(v);
+  const escapeHtml = value =>
+    String(value).replace(/[&<>"']/g, character => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    })[character]);
+
+  const safe = value =>
+    (value === undefined || value === null || value === "")
+      ? "—"
+      : escapeHtml(value);
 
   if (!why || why.error) {
     body.innerHTML =

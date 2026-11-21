@@ -1,6 +1,11 @@
 name: Build SmartTradeEngine APK
 
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'android-wrapper/**'
+      - '.github/workflows/build-smarttradeengine-apk.yml'
   workflow_dispatch:
   push:
     branches: [main]
@@ -38,7 +43,9 @@ jobs:
           unzip -q /tmp/gradle.zip -d /tmp
 
       - name: Build debug APK
-        run: /tmp/gradle-8.9/bin/gradle -p android-wrapper assembleDebug
+        env:
+          SMARTTRADE_SERVER_URL: ${{ secrets.SMARTTRADE_SERVER_URL }}
+        run: /tmp/gradle-8.9/bin/gradle -p android-wrapper -PSMARTTRADE_SERVER_URL="${SMARTTRADE_SERVER_URL:-}" assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

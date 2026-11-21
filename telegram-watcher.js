@@ -254,19 +254,16 @@ const ROTATION_MS =
     ) || 4 * 60 * 1000
   );
 
-const DAILY_CREDIT_BUDGET =
-  Math.max(
-    100,
-    Number(
-      process.env.TELEGRAM_WATCH_DAILY_CREDIT_BUDGET
-    ) || 600
-  );
+// Hard application-level safety ceiling. Do not raise this through env config.
+const DAILY_CREDIT_BUDGET = 600;
 
 const STATE_FILE =
-  path.join(
-    __dirname,
-    ".telegram-watcher-state.json"
-  );
+  process.env.TELEGRAM_WATCH_STATE_FILE
+    ? path.resolve(process.env.TELEGRAM_WATCH_STATE_FILE)
+    : path.join(
+        __dirname,
+        ".telegram-watcher-state.json"
+      );
 
 
 
@@ -451,7 +448,8 @@ function loadBrowserEngines() {
       source,
       context,
       {
-        filename: file
+        filename: file,
+        timeout: 5000
       }
     );
   }
@@ -780,9 +778,28 @@ function readStateFile(
   }
 
 
+  const hasCreditCount =
+    Object.prototype.hasOwnProperty.call(parsed, "watcherCredits");
+  const rawCreditCount = parsed.watcherCredits;
+  const validCreditCount =
+    (typeof rawCreditCount === "number" &&
+      Number.isFinite(rawCreditCount) &&
+      rawCreditCount >= 0) ||
+    (typeof rawCreditCount === "string" &&
+      /^\d+$/.test(rawCreditCount));
+
+  // Corrupt/negative stored counters fail closed at the ceiling.
+  const safeCreditCount = !hasCreditCount
+    ? 0
+    : validCreditCount
+      ? Math.min(DAILY_CREDIT_BUDGET, Math.floor(Number(rawCreditCount)))
+      : DAILY_CREDIT_BUDGET;
+
   return {
     ...defaultState(),
     ...parsed,
+
+    watcherCredits: safeCreditCount,
 
     marketIndex:
       normalizeMarketIndex(
@@ -866,29 +883,13 @@ marketIndex =
 watcherState.marketIndex =
   marketIndex;
 
-function getApiKeyHash() {
-  const key = String(process.env.TWELVE_DATA_API_KEY || "");
-  if (!key) return "no-key";
-  return require("crypto").createHash("md5").update(key).digest("hex").slice(0, 8);
-}
-
 function resetDailyBudgetIfNeeded() {
-  const today = new Date().toISOString().slice(0, 10);
-  const currentKeyHash = getApiKeyHash();
-  let resetReason = null;
-
+  const today = currentIstDay();
   if (watcherState.day !== today) {
-    resetReason = "New day";
-  } else if (watcherState.keyHash !== currentKeyHash) {
-    resetReason = "New API key detected";
-  }
-
-  if (resetReason) {
     watcherState.day = today;
     watcherState.watcherCredits = 0;
-    watcherState.keyHash = currentKeyHash;
     saveState();
-    console.log("[Scanner] Budget auto-reset: " + resetReason);
+    console.log("[Scanner] Daily 600-credit budget reset (Asia/Kolkata): " + today);
   }
 }
 
@@ -907,6 +908,8 @@ function writeStateAtomic(
   const previousTmpFile =
     `${filePath}.prev.tmp`;
 
+
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
 
   const json =
     JSON.stringify(
@@ -959,7 +962,10 @@ function writeStateAtomic(
     fs.writeFileSync(
       tmpFile,
       json,
-      "utf8"
+      {
+        encoding: "utf8",
+        mode: 0o600
+      }
     );
 
 
@@ -1056,12 +1062,16 @@ function saveState() {
       watcherState
     );
 
+    return true;
+
   } catch (error) {
 
     console.error(
       "[Telegram Watcher] State save failed:",
       error.message
     );
+
+    return false;
   }
 }
 
@@ -1350,8 +1360,15 @@ function spendCredit() {
 
   resetDailyBudgetIfNeeded();
 
-  watcherState.watcherCredits +=
-    1;
+  const previousCredits = watcherState.watcherCredits;
+  watcherState.watcherCredits += 1;
+
+  // Fail closed: do not make a Twelve Data request if its budget reservation
+  // cannot be persisted to the watcher state file.
+  if (!saveState()) {
+    watcherState.watcherCredits = previousCredits;
+    throw new Error("Watcher daily credit reservation could not be persisted");
+  }
 }
 
 
@@ -2017,31 +2034,54 @@ async function sendTelegram(text) {
   const token = String(process.env.TELEGRAM_BOT_TOKEN || "").trim();
   const chatId = String(process.env.TELEGRAM_CHAT_ID || "").trim();
 
-  // Save to local history file (for website)
-  const file = '.notifications.json';
-  let history = [];
-  try { if (fs.existsSync(file)) history = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) {}
-  history.unshift({ id: Date.now(), time: new Date().toISOString(), text });
-  fs.writeFileSync(file, JSON.stringify(history.slice(0, 50), null, 2));
+  // Save website notifications beside the server, using an atomic replacement.
+  const file = process.env.NOTIFICATIONS_FILE
+    ? path.resolve(process.env.NOTIFICATIONS_FILE)
+    : path.join(__dirname, ".notifications.json");
+  const tempFile = file + ".tmp";
+  try { fs.mkdirSync(path.dirname(file), { recursive: true }); } catch {}
+  try {
+    let history = [];
+    if (fs.existsSync(file)) {
+      const parsed = JSON.parse(fs.readFileSync(file, "utf8"));
+      if (Array.isArray(parsed)) history = parsed;
+    }
+    history.unshift({
+      id: Date.now(),
+      time: new Date().toISOString(),
+      text: String(text || "")
+    });
+    fs.writeFileSync(tempFile, JSON.stringify(history.slice(0, 50), null, 2), {
+      encoding: "utf8",
+      mode: 0o600
+    });
+    fs.renameSync(tempFile, file);
+  } catch (error) {
+    try { if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile); } catch {}
+    console.error("[Telegram] Notification history save failed:", error.message);
+  }
 
-  // Send to Telegram
+  // Bound Telegram network waits so a stalled provider cannot hold a watcher tick.
   if (token && chatId) {
     try {
-      const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: chatId, text })
-      });
-      const data = await res.json();
-      if (data.ok) {
-         console.log(`[Telegram] Message sent successfully (ID: ${data.result.message_id})`);
-         return data.result;
-      } else {
-         console.log(`[Telegram] Failed: ${data.description}`);
-         return null;
+      const result = await fetchWithTimeout(
+        fetch,
+        "https://api.telegram.org/bot" + token + "/sendMessage",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: chatId, text })
+        },
+        10000
+      );
+      if (result.response.ok && result.data.ok) {
+        console.log("[Telegram] Message sent successfully (ID: " + result.data.result.message_id + ")");
+        return result.data.result;
       }
-    } catch (e) {
-      console.log(`[Telegram] Error: ${e.message}`);
+      console.log("[Telegram] Failed:", result.data.description || result.response.status);
+      return null;
+    } catch (error) {
+      console.log("[Telegram] Error:", error.message);
     }
   }
   return { message_id: Date.now() };
@@ -3340,15 +3380,12 @@ function trackSignalOutcome(
           maxRReached:
             maxR,
 
+          // A prior T1 touch is not proof of a broker partial fill.
+          // Keep the terminal market event as SL_HIT and leave realized R unknown.
           outcomeR:
             t1HitAt
-              ? 1.5
+              ? null
               : -1,
-
-          outcome:
-            t1HitAt
-              ? "T1_HIT"
-              : "SL_HIT",
 
           status:
             "INACTIVE",

@@ -2,10 +2,12 @@ const fs = require("fs");
 const path = require("path");
 
 const HISTORY_FILE =
-  path.join(
-    __dirname,
-    ".signal-history.json"
-  );
+  process.env.SIGNAL_HISTORY_FILE
+    ? path.resolve(process.env.SIGNAL_HISTORY_FILE)
+    : path.join(
+        __dirname,
+        ".signal-history.json"
+      );
 
 
 
@@ -174,6 +176,8 @@ function writeHistoryAtomic(
   }
 
 
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+
   const tmp =
     `${filePath}.tmp`;
 
@@ -228,7 +232,10 @@ function writeHistoryAtomic(
     fs.writeFileSync(
       tmp,
       json,
-      "utf8"
+      {
+        encoding: "utf8",
+        mode: 0o600
+      }
     );
 
 
