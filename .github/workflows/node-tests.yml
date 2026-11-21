@@ -24,6 +24,14 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
       - run: npm ci
+      - name: Check runtime and browser JavaScript syntax
+        run: |
+          node --check server.js
+          node --check telegram-watcher.js
+          node --check cloud-sync.js
+          node --check private-history-api-auth.js
+          node --check twelve-data-budget.js
+          node --check public/history.js
       - run: npm test
       - name: Require no moderate-or-higher dependency vulnerabilities
         if: matrix.node-version == 24
