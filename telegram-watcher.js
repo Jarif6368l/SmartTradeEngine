@@ -1042,12 +1042,16 @@ function saveState() {
       watcherState
     );
 
+    return true;
+
   } catch (error) {
 
     console.error(
       "[Telegram Watcher] State save failed:",
       error.message
     );
+
+    return false;
   }
 }
 
@@ -1336,11 +1340,15 @@ function spendCredit() {
 
   resetDailyBudgetIfNeeded();
 
-  watcherState.watcherCredits +=
-    1;
+  const previousCredits = watcherState.watcherCredits;
+  watcherState.watcherCredits += 1;
 
-  // Persist the reservation before making the provider request.
-  saveState();
+  // Fail closed: do not make a Twelve Data request if its budget reservation
+  // cannot be persisted to the watcher state file.
+  if (!saveState()) {
+    watcherState.watcherCredits = previousCredits;
+    throw new Error("Watcher daily credit reservation could not be persisted");
+  }
 }
 
 
