@@ -2035,8 +2035,11 @@ async function sendTelegram(text) {
   const chatId = String(process.env.TELEGRAM_CHAT_ID || "").trim();
 
   // Save website notifications beside the server, using an atomic replacement.
-  const file = path.join(__dirname, ".notifications.json");
+  const file = process.env.NOTIFICATIONS_FILE
+    ? path.resolve(process.env.NOTIFICATIONS_FILE)
+    : path.join(__dirname, ".notifications.json");
   const tempFile = file + ".tmp";
+  try { fs.mkdirSync(path.dirname(file), { recursive: true }); } catch {}
   try {
     let history = [];
     if (fs.existsSync(file)) {
