@@ -53,6 +53,9 @@ const requirePrivateHistoryApiAuth = createPrivateHistoryApiAuth();
 const app =
   express();
 
+// Render terminates TLS at its proxy and forwards the original client address.
+app.set("trust proxy", 1);
+
 const PORT =
   process.env.PORT ||
   3000;
@@ -14876,7 +14879,18 @@ const browserWss =
   new WebSocketServer({
     server,
     path: "/live",
-    maxPayload: 8192
+    maxPayload: 8192,
+    verifyClient: (info, done) => {
+      const origin = info.origin;
+      if (!origin) return done(true); // Permit non-browser clients without an Origin header.
+      try {
+        const originHost = new URL(origin).host.toLowerCase();
+        const requestHost = String(info.req.headers.host || "").toLowerCase();
+        return done(originHost === requestHost, 403, "Origin not allowed");
+      } catch {
+        return done(false, 403, "Invalid Origin");
+      }
+    }
   });
 
 
@@ -14884,7 +14898,7 @@ browserWss.on(
   "connection",
   client => {
 
-    if (browserLiveClients.size >= 50) {
+    if (browserLiveClients.size >= 20) {
       client.close(1013, "Live connection capacity reached");
       return;
     }
@@ -14910,6 +14924,8 @@ browserWss.on(
 
     client._liveSubscription =
       null;
+
+    client._lastSubscriptionAt = 0;
 
 
     sendLiveToClient(
@@ -15097,6 +15113,17 @@ browserWss.on(
           return;
         }
 
+
+        const now = Date.now();
+        if (now - client._lastSubscriptionAt < 2000) {
+          sendLiveToClient(client, {
+            type: "status",
+            status: "error",
+            message: "Please wait before changing the live subscription again"
+          });
+          return;
+        }
+        client._lastSubscriptionAt = now;
 
         startClientUpstream(
           client,
