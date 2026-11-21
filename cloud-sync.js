@@ -46,8 +46,14 @@ function validateHistoryRecords(value) {
 }
 
 function recordTime(row) {
-  const value = Date.parse(row.updatedAt || row.outcomeAt || row.sentAt || "");
-  return Number.isFinite(value) ? value : 0;
+  const timestamps = [
+    row.updatedAt,
+    row.outcomeAt,
+    row.closedAt,
+    row.sentAt
+  ].map(value => Date.parse(value || ""))
+    .filter(Number.isFinite);
+  return timestamps.length ? Math.max(...timestamps) : 0;
 }
 
 function mergeHistoryRecords(localRows, remoteRows) {
