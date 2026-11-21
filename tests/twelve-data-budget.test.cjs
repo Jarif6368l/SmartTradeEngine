@@ -73,3 +73,15 @@ test("the counter cannot be reset by changing the Twelve Data API key", () => {
   state.keyHash = "new-key";
   assert.equal(getBudgetStatus(state, now).used, 250);
 });
+
+test("invalid or negative persisted counters fail closed at the 600-credit ceiling", () => {
+  const now = Date.parse("2026-11-21T12:00:00.000Z");
+  for (const invalid of [null, "not-a-number", -1]) {
+    const state = { day: istDayFor(now), watcherCredits: invalid };
+    assert.equal(getBudgetStatus(state, now).used, 600);
+    assert.throws(
+      () => reserveCredit(state, now),
+      error => error.code === "TWELVE_DATA_DAILY_BUDGET_EXHAUSTED"
+    );
+  }
+});
