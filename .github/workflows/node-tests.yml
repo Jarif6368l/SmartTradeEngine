@@ -24,6 +24,10 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: npm
       - run: npm ci
+      - name: Syntax-check JavaScript sources
+        shell: bash
+        run: |
+          find . -path './node_modules' -prune -o -name '*.js' -type f -print0 | xargs -0 -n1 node --check
       - run: npm test
       - name: Audit production dependency tree
         if: matrix.node-version == 24
