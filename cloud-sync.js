@@ -190,7 +190,8 @@ async function uploadToCloud() {
     const gist = await responseJson(getResponse, "Gist lookup before upload");
     const remote = await readGistHistory(gist);
     const rows = remote.rows ? mergeHistoryRecords(local, remote.rows) : local;
-    if (remote.rows) writeHistoryAtomic(rows);
+    // Do not rewrite the live local file during upload: the watcher may be
+    // updating it concurrently. The merged snapshot is safely stored in Gist.
     const filename = remote.filename || CANONICAL_FILENAME;
     const response = await fetchWithTimeout(GIST_URL, {
       method: "PATCH",
