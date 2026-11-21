@@ -778,9 +778,28 @@ function readStateFile(
   }
 
 
+  const hasCreditCount =
+    Object.prototype.hasOwnProperty.call(parsed, "watcherCredits");
+  const rawCreditCount = parsed.watcherCredits;
+  const validCreditCount =
+    (typeof rawCreditCount === "number" &&
+      Number.isFinite(rawCreditCount) &&
+      rawCreditCount >= 0) ||
+    (typeof rawCreditCount === "string" &&
+      /^\\d+$/.test(rawCreditCount));
+
+  // Corrupt/negative stored counters fail closed at the ceiling.
+  const safeCreditCount = !hasCreditCount
+    ? 0
+    : validCreditCount
+      ? Math.min(DAILY_CREDIT_BUDGET, Math.floor(Number(rawCreditCount)))
+      : DAILY_CREDIT_BUDGET;
+
   return {
     ...defaultState(),
     ...parsed,
+
+    watcherCredits: safeCreditCount,
 
     marketIndex:
       normalizeMarketIndex(
