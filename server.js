@@ -46,10 +46,15 @@ const {
   getSignalHistoryStats,
   exportSignalHistory
 } = require("./signal-history");
+const { createPrivateHistoryApiAuth } = require("./private-history-api-auth");
+const requirePrivateHistoryApiAuth = createPrivateHistoryApiAuth();
 
 
 const app =
   express();
+
+// Render terminates TLS at its proxy; trust the single proxy hop for client IPs.
+app.set("trust proxy", 1);
 
 const PORT =
   process.env.PORT ||
@@ -61,7 +66,7 @@ const HOST =
     process.env.HOST ||
     "0.0.0.0"
   ).trim() ||
-  "127.0.0.1";
+  "0.0.0.0";
 
 const CACHE_TTL =
   10 * 60 * 1000;
@@ -13506,7 +13511,7 @@ app.get(
 
 
 
-app.get('/api/notifications', (req, res) => {
+app.get('/api/notifications', requirePrivateHistoryApiAuth, (req, res) => {
   try {
     const file = path.join(__dirname, '.notifications.json');
     if (fs.existsSync(file)) {
@@ -13520,7 +13525,7 @@ app.get('/api/notifications', (req, res) => {
 });
 
 // Read-only signal history API.
-app.get("/api/signal-history/export", (req, res) => {
+app.get("/api/signal-history/export", requirePrivateHistoryApiAuth, (req, res) => {
   try {
     const history = exportSignalHistory();
     res.json({ ok: true, count: history.length, history });
@@ -13532,7 +13537,7 @@ app.get("/api/signal-history/export", (req, res) => {
   }
 });
 
-app.get("/api/signal-history/stats", (req, res) => {
+app.get("/api/signal-history/stats", requirePrivateHistoryApiAuth, (req, res) => {
   try {
     res.json({ ok: true, stats: getSignalHistoryStats() });
   } catch (error) {
@@ -13543,7 +13548,7 @@ app.get("/api/signal-history/stats", (req, res) => {
   }
 });
 
-app.get("/api/signal-history", (req, res) => {
+app.get("/api/signal-history", requirePrivateHistoryApiAuth, (req, res) => {
   try {
     const history = listSignalHistory({
       limit: req.query.limit,
@@ -13562,37 +13567,46 @@ app.get("/api/signal-history", (req, res) => {
 
 
 // === CLOUD SYNC STARTUP ===
-// Create the HTTP server before the async restore so the WebSocket bridge can
-// attach during module initialization. Do not accept traffic or start the
-// watcher until the persisted history has been restored.
+// Keep the Render web service available while restoring history, but never
+// start the signal watcher until the authoritative cloud history is restored.
 const server = require("http").createServer(app);
+let telegramWatcherStarted = false;
+let cloudUploadTimer = null;
 
-downloadFromCloud()
-  .catch(error => {
-    console.error("[Cloud Sync] Initial restore failed; server startup aborted:", error.message);
-    throw error;
-  })
-  .then(() => {
-    console.log("[Cloud Sync] Initial restore complete. Starting server and watcher...");
-    server.listen(PORT, HOST, () => {
-      console.log(`AI Trading Analyst Web running on http://${HOST}:${PORT}`);
-    });
-    startTelegramTradeWatcher({
-      fetchTwelveCandles: fetchMarketCandles
-    });
+function startWatcherAfterHistoryRestore() {
+  if (telegramWatcherStarted) return;
+  telegramWatcherStarted = true;
 
-    // Start periodic uploads only after the initial restore has completed.
-    const cloudUploadTimer = setInterval(() => {
+  startTelegramTradeWatcher({
+    fetchTwelveCandles: fetchMarketCandles
+  });
+
+  if (!cloudUploadTimer) {
+    cloudUploadTimer = setInterval(() => {
       uploadToCloud().catch(error => {
         console.error("[Cloud Sync] Scheduled upload failed:", error.message);
       });
     }, 5 * 60 * 1000);
     if (typeof cloudUploadTimer.unref === "function") cloudUploadTimer.unref();
-  })
-  .catch(error => {
-    console.error("[Startup] Refusing to start without a verified history restore:", error.message);
-    process.exitCode = 1;
-  });
+  }
+}
+
+async function restoreHistoryAndStartWatcher() {
+  try {
+    const result = await downloadFromCloud();
+    console.log("[Cloud Sync] Initial history restore completed:", result);
+    startWatcherAfterHistoryRestore();
+  } catch (error) {
+    console.error("[Cloud Sync] Initial restore failed; watcher remains paused:", error.message);
+    const retry = setTimeout(restoreHistoryAndStartWatcher, 60 * 1000);
+    if (typeof retry.unref === "function") retry.unref();
+  }
+}
+
+server.listen(PORT, HOST, () => {
+  console.log("AI Trading Analyst Web running on http://" + HOST + ":" + PORT);
+});
+void restoreHistoryAndStartWatcher();
 
 
 // === LIVE WS BRIDGE ===
@@ -14909,18 +14923,56 @@ function startClientUpstream(
 }
 
 
+const LIVE_MAX_CONNECTIONS = 40;
+const LIVE_MAX_CONNECTIONS_PER_IP = 4;
+const liveConnectionsByIp = new Map();
+
+function getLiveClientIp(req) {
+  const forwarded = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
+  return forwarded || req.socket?.remoteAddress || "unknown";
+}
+
 const browserWss =
   new WebSocketServer({
     server,
+    path: "/live",
+    maxPayload: 8192,
+    perMessageDeflate: false,
+    verifyClient: (info, done) => {
+      let sameOrigin = false;
+      try {
+        const origin = new URL(info.origin || "");
+        const requestHost = String(info.req.headers.host || "").toLowerCase();
+        sameOrigin = Boolean(requestHost && origin.host.toLowerCase() === requestHost);
+      } catch {
+        sameOrigin = false;
+      }
 
-    path:
-      "/live"
+      if (!sameOrigin) {
+        done(false, 403, "WebSocket origin not allowed");
+        return;
+      }
+
+      const ip = getLiveClientIp(info.req);
+      const perIp = liveConnectionsByIp.get(ip) || 0;
+      if (browserLiveClients.size >= LIVE_MAX_CONNECTIONS ||
+          perIp >= LIVE_MAX_CONNECTIONS_PER_IP) {
+        done(false, 429, "WebSocket connection limit reached");
+        return;
+      }
+
+      done(true);
+    }
   });
 
 
 browserWss.on(
   "connection",
-  client => {
+  (client, req) => {
+
+    const liveIp = getLiveClientIp(req);
+    client._liveIp = liveIp;
+    liveConnectionsByIp.set(liveIp, (liveConnectionsByIp.get(liveIp) || 0) + 1);
 
     browserLiveClients.add(
       client
@@ -15031,6 +15083,17 @@ browserWss.on(
         ) {
           return;
         }
+
+        const now = Date.now();
+        if (client._lastSubscriptionAt && now - client._lastSubscriptionAt < 1500) {
+          sendLiveToClient(client, {
+            type: "status",
+            status: "error",
+            message: "Subscription changes are rate-limited"
+          });
+          return;
+        }
+        client._lastSubscriptionAt = now;
 
 
         const interval =
@@ -15148,6 +15211,11 @@ browserWss.on(
         browserLiveClients.delete(
           client
         );
+
+        const ip = client._liveIp;
+        const count = liveConnectionsByIp.get(ip) || 0;
+        if (count <= 1) liveConnectionsByIp.delete(ip);
+        else liveConnectionsByIp.set(ip, count - 1);
 
         stopClientUpstream(
           client
