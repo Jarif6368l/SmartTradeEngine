@@ -16,7 +16,7 @@ test("daily watcher budget resets by Asia/Kolkata calendar date", () => {
   assert.match(source, /const today = currentIstDay\(\);[\s\S]{0,220}watcherState\.day !== today/);
   assert.doesNotMatch(source, /watcherState\.day !== new Date\(\)\.toISOString\(\)\.slice\(0, 10\)/);
   assert.match(source, /TELEGRAM_WATCH_STATE_FILE/);
-  assert.match(source, /safeCreditCount = !hasCreditCount[\\s\\S]{0,180}: DAILY_CREDIT_BUDGET/);
+  assert.match(source, /safeCreditCount = !hasCreditCount[\s\S]{0,180}: DAILY_CREDIT_BUDGET/);
 
   assert.match(source, /if \(!saveState\(\)\)[\s\S]{0,180}credit reservation could not be persisted/);
 });
