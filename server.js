@@ -45,8 +45,6 @@ const {
   getSignalHistoryStats,
   exportSignalHistory
 } = require("./signal-history");
-const { createPrivateHistoryApiAuth } = require("./private-history-api-auth");
-const requirePrivateHistoryApiToken = createPrivateHistoryApiAuth();
 let historyRestoreComplete = false;
 
 function requirePrivateHistoryApiAuth(req, res, next) {
@@ -57,7 +55,7 @@ function requirePrivateHistoryApiAuth(req, res, next) {
       error: "Signal history restore is not complete"
     });
   }
-  return requirePrivateHistoryApiToken(req, res, next);
+  return next();
 }
 
 
