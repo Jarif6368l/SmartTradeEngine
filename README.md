@@ -38,3 +38,25 @@ npm audit --audit-level=moderate
 ```
 
 The Android wrapper is a WebView client. It needs the deployed HTTPS server URL; it does not embed a Node.js server.
+
+## Signal history backup and recovery
+
+Create a timestamped snapshot and SHA-256 manifest:
+
+```sh
+node scripts/signal-history-backup.js backup
+```
+
+Verify a snapshot before any restore:
+
+```sh
+node scripts/signal-history-backup.js verify /path/to/signal-history-<timestamp>.json
+```
+
+Restore is destructive and requires explicit confirmation:
+
+```sh
+node scripts/signal-history-backup.js restore /path/to/signal-history-<timestamp>.json --confirm
+```
+
+Stop the watcher before taking a filesystem-level backup, and copy the snapshot plus manifest to an independent location. This utility is local-only; it does not change Render settings or access broker/market integrations.
