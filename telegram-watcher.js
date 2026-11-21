@@ -1316,16 +1316,16 @@ async function maybeNotifyBudgetExhausted() {
     }
 
     const text = [
-      "⚠️ TWELVE DATA WATCHER BUDGET EXHAUSTED",
+      "⚠️ TWELVE DATA DAILY REST BUDGET EXHAUSTED",
       "",
       "Used: " +
         watcherState.watcherCredits +
         "/" +
         DAILY_CREDIT_BUDGET,
-      "Crypto/Forex watcher scanning paused.",
+      "All Twelve Data REST requests are paused until the next IST day.",
       "Daily watcher budget will reset on the next day.",
       "",
-      "Note: This is the app's daily watcher safety cap, not the Twelve Data provider's own account limit."
+      "Note: This is the app's fixed 600-credit daily safety cap, not the provider's separate plan quota."
     ].join("\n");
 
     try {
