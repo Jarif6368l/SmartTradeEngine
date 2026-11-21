@@ -254,13 +254,8 @@ const ROTATION_MS =
     ) || 4 * 60 * 1000
   );
 
-const DAILY_CREDIT_BUDGET =
-  Math.max(
-    100,
-    Number(
-      process.env.TELEGRAM_WATCH_DAILY_CREDIT_BUDGET
-    ) || 600
-  );
+// Hard application-level safety ceiling. Do not raise this through env config.
+const DAILY_CREDIT_BUDGET = 600;
 
 const STATE_FILE =
   path.join(
@@ -873,22 +868,12 @@ function getApiKeyHash() {
 }
 
 function resetDailyBudgetIfNeeded() {
-  const today = new Date().toISOString().slice(0, 10);
-  const currentKeyHash = getApiKeyHash();
-  let resetReason = null;
-
+  const today = currentIstDay();
   if (watcherState.day !== today) {
-    resetReason = "New day";
-  } else if (watcherState.keyHash !== currentKeyHash) {
-    resetReason = "New API key detected";
-  }
-
-  if (resetReason) {
     watcherState.day = today;
     watcherState.watcherCredits = 0;
-    watcherState.keyHash = currentKeyHash;
     saveState();
-    console.log("[Scanner] Budget auto-reset: " + resetReason);
+    console.log("[Scanner] Daily 600-credit budget reset (Asia/Kolkata): " + today);
   }
 }
 
@@ -3340,15 +3325,12 @@ function trackSignalOutcome(
           maxRReached:
             maxR,
 
+          // A prior T1 touch is not proof of a broker partial fill.
+          // Keep the terminal market event as SL_HIT and leave realized R unknown.
           outcomeR:
             t1HitAt
-              ? 1.5
+              ? null
               : -1,
-
-          outcome:
-            t1HitAt
-              ? "T1_HIT"
-              : "SL_HIT",
 
           status:
             "INACTIVE",
