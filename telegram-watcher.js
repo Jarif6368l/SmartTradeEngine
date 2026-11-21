@@ -22,10 +22,9 @@ let paperTrading = null;
 try {
   paperTrading = require("./paper-trading");
 } catch (e) {
-  console.warn(
-    "[Demo] paper-trading module unavailable:",
-    e && e.message
-  );
+  // Paper trading is an optional demo-only integration. Keep the core
+  // watcher operational without emitting a startup warning when it is absent.
+  paperTrading = null;
 }
 
 function notifyDemoNewSignal(historyEntry) {
@@ -2061,6 +2060,14 @@ async function sendTelegram(text) {
     console.error("[Telegram] Notification history save failed:", error.message);
   }
 
+  // Do not fabricate a message_id: callers must only record delivery when
+  // Telegram credentials are configured and Telegram confirms success.
+  if (!token || !chatId) {
+    console.warn("[Telegram] Delivery skipped: " +
+      (!token ? "TELEGRAM_BOT_TOKEN is missing" : "TELEGRAM_CHAT_ID is missing"));
+    return null;
+  }
+
   // Bound Telegram network waits so a stalled provider cannot hold a watcher tick.
   if (token && chatId) {
     try {
@@ -2084,7 +2091,7 @@ async function sendTelegram(text) {
       console.log("[Telegram] Error:", error.message);
     }
   }
-  return { message_id: Date.now() };
+  return null;
 }
 
 /* === SL HIT REASON: factual reason derivation from existing stored data ===
