@@ -263,16 +263,27 @@ const ROTATION_MS =
 // Hard application-wide ceiling. It is intentionally not environment-overridable.
 
 
+const LEGACY_STATE_FILE =
+  path.join(__dirname, ".telegram-watcher-state.json");
+
 const STATE_FILE =
-  path.join(
-    __dirname,
-    ".telegram-watcher-state.json"
-  );
-
-
+  process.env.TELEGRAM_WATCH_STATE_FILE
+    ? path.resolve(process.env.TELEGRAM_WATCH_STATE_FILE)
+    : LEGACY_STATE_FILE;
 
 const STATE_PREV_FILE =
   `${STATE_FILE}.prev`;
+
+// When moving to a Render persistent disk, migrate the previous local
+// counter once so the deployment does not receive a fresh 600-credit budget.
+if (
+  STATE_FILE !== LEGACY_STATE_FILE &&
+  !fs.existsSync(STATE_FILE) &&
+  fs.existsSync(LEGACY_STATE_FILE)
+) {
+  fs.mkdirSync(path.dirname(STATE_FILE), { recursive: true });
+  fs.copyFileSync(LEGACY_STATE_FILE, STATE_FILE);
+}
 const frameCache =
   new Map();
 
@@ -879,6 +890,8 @@ function writeStateAtomic(
   filePath,
   state
 ) {
+
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
 
   const tmpFile =
     `${filePath}.tmp`;
