@@ -183,7 +183,14 @@ async function downloadFromCloud() {
       console.warn("[Cloud Sync] No recognized history file in Gist; local history was left unchanged.");
       return { skipped: true, reason: "history file not found" };
     }
-    const local = readLocalHistory();
+    let local = [];
+    try {
+      local = readLocalHistory();
+    } catch (localError) {
+      // The verified cloud copy can recover an unreadable local primary.
+      // writeHistoryAtomic preserves the corrupt primary as a timestamped file.
+      console.error("[Cloud Sync] Local history unreadable; restoring from validated Gist while preserving the local file:", localError.message);
+    }
     const merged = mergeHistoryRecords(local, remote.rows);
     writeHistoryAtomic(merged);
     console.log(`[Cloud Sync] Restored/merged ${remote.rows.length} cloud and ${local.length} local signals (${merged.length} total).`);
