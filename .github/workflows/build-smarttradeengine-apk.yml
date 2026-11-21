@@ -1,6 +1,11 @@
 name: Build SmartTradeEngine APK
 
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'android-wrapper/**'
+      - '.github/workflows/build-smarttradeengine-apk.yml'
   workflow_dispatch:
   push:
     branches: [main]
