@@ -13486,7 +13486,9 @@ app.get(
 
 app.get('/api/notifications', requirePrivateHistoryApiAuth, (req, res) => {
   try {
-    const file = path.join(__dirname, '.notifications.json');
+    const file = process.env.NOTIFICATIONS_FILE
+      ? path.resolve(process.env.NOTIFICATIONS_FILE)
+      : path.join(__dirname, '.notifications.json');
     if (fs.existsSync(file)) {
       const data = JSON.parse(fs.readFileSync(file, 'utf8'));
       return res.json({ ok: true, notifications: data });
