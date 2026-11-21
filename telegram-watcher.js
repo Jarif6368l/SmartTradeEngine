@@ -2029,6 +2029,29 @@ async function fetchWithTimeout(
 
 
 
+function telegramNetworkErrorDetails(error) {
+  const cause = error && error.cause;
+  const code = cause && (cause.code || cause.errno);
+  const syscall = cause && cause.syscall;
+  const hostname = cause && cause.hostname;
+  return [
+    error && error.name ? error.name : "Error",
+    code ? "code=" + String(code).slice(0, 48) : null,
+    syscall ? "syscall=" + String(syscall).slice(0, 48) : null,
+    hostname ? "host=" + String(hostname).slice(0, 120) : null
+  ].filter(Boolean).join(" ");
+}
+
+function isRetryableTelegramNetworkError(error) {
+  const message = String(error && error.message || error || "").toLowerCase();
+  const causeCode = String(error && error.cause && error.cause.code || "").toUpperCase();
+  return message.includes("fetch failed") ||
+    message.includes("network") ||
+    message.includes("timed out") ||
+    message.includes("timeout") ||
+    ["ECONNRESET", "ECONNREFUSED", "EAI_AGAIN", "ENOTFOUND", "ETIMEDOUT", "UND_ERR_CONNECT_TIMEOUT", "UND_ERR_SOCKET"].includes(causeCode);
+}
+
 async function sendTelegram(text) {
   const token = String(process.env.TELEGRAM_BOT_TOKEN || "").trim();
   const chatId = String(process.env.TELEGRAM_CHAT_ID || "").trim();
@@ -2060,35 +2083,40 @@ async function sendTelegram(text) {
     console.error("[Telegram] Notification history save failed:", error.message);
   }
 
-  // Do not fabricate a message_id: callers must only record delivery when
-  // Telegram credentials are configured and Telegram confirms success.
+  // A real Telegram message_id is required before callers may mark delivery successful.
   if (!token || !chatId) {
     console.warn("[Telegram] Delivery skipped: " +
       (!token ? "TELEGRAM_BOT_TOKEN is missing" : "TELEGRAM_CHAT_ID is missing"));
     return null;
   }
 
-  // Bound Telegram network waits so a stalled provider cannot hold a watcher tick.
-  if (token && chatId) {
+  const url = "https://api.telegram.org/bot" + token + "/sendMessage";
+  const requestOptions = {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, text })
+  };
+
+  // Retry one transient transport failure. Telegram may have accepted a request
+  // before a connection dropped, so a retry can rarely produce a duplicate alert.
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
     try {
-      const result = await fetchWithTimeout(
-        fetch,
-        "https://api.telegram.org/bot" + token + "/sendMessage",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: chatId, text })
-        },
-        10000
-      );
-      if (result.response.ok && result.data.ok) {
+      const result = await fetchWithTimeout(fetch, url, requestOptions, 10000);
+      if (result.response.ok && result.data.ok && result.data.result && result.data.result.message_id) {
         console.log("[Telegram] Message sent successfully (ID: " + result.data.result.message_id + ")");
         return result.data.result;
       }
       console.log("[Telegram] Failed:", result.data.description || result.response.status);
       return null;
     } catch (error) {
-      console.log("[Telegram] Error:", error.message);
+      const details = telegramNetworkErrorDetails(error);
+      if (attempt < 2 && isRetryableTelegramNetworkError(error)) {
+        console.warn("[Telegram] Transient network failure (" + details + "); retrying once after 800ms.");
+        await new Promise(resolve => setTimeout(resolve, 800));
+        continue;
+      }
+      console.error("[Telegram] Error: " + String(error && error.message || error) + " [" + details + "]");
+      return null;
     }
   }
   return null;
