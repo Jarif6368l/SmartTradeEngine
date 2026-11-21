@@ -14900,11 +14900,31 @@ function startClientUpstream(
 
 const LIVE_MAX_CONNECTIONS = 40;
 const LIVE_MAX_CONNECTIONS_PER_IP = 4;
+const LIVE_MAX_HANDSHAKES_PER_IP_PER_MINUTE = 20;
 const liveConnectionsByIp = new Map();
+const liveHandshakeWindowsByIp = new Map();
 
 function getLiveClientIp(req) {
   const forwarded = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
   return forwarded || req.socket?.remoteAddress || "unknown";
+}
+
+function allowLiveHandshake(ip) {
+  const now = Date.now();
+  let window = liveHandshakeWindowsByIp.get(ip);
+  if (!window || now - window.startedAt >= 60 * 1000) {
+    window = { startedAt: now, count: 0 };
+  }
+  if (window.count >= LIVE_MAX_HANDSHAKES_PER_IP_PER_MINUTE) return false;
+  window.count += 1;
+  liveHandshakeWindowsByIp.set(ip, window);
+
+  if (liveHandshakeWindowsByIp.size > 500) {
+    for (const [key, value] of liveHandshakeWindowsByIp) {
+      if (now - value.startedAt >= 60 * 1000) liveHandshakeWindowsByIp.delete(key);
+    }
+  }
+  return true;
 }
 
 const browserWss =
@@ -14930,7 +14950,8 @@ const browserWss =
 
       const ip = getLiveClientIp(info.req);
       const perIp = liveConnectionsByIp.get(ip) || 0;
-      if (browserLiveClients.size >= LIVE_MAX_CONNECTIONS ||
+      if (!allowLiveHandshake(ip) ||
+          browserLiveClients.size >= LIVE_MAX_CONNECTIONS ||
           perIp >= LIVE_MAX_CONNECTIONS_PER_IP) {
         done(false, 429, "WebSocket connection limit reached");
         return;
