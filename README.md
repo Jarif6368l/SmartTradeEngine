@@ -25,6 +25,8 @@ Generate a private history API token outside the repository (for example, `opens
 
 The Telegram watcher's internal daily request budget is hard-capped at **600** and resets on the Asia/Kolkata calendar day. Environment variables cannot raise this application-level cap. This is an application safeguard, not a statement of the provider's account-level quota. The separate Twelve Data account quota remains authoritative.
 
+For the 600/day counter to survive Render restarts and redeploys, attach a Render persistent disk (for example, mounted at `/var/data`) and set `TELEGRAM_WATCH_STATE_FILE=/var/data/.telegram-watcher-state.json`. Without a persistent disk, Render's ephemeral filesystem can reset the app's local counter when the instance is replaced.
+
 ## Local checks
 
 ```sh
