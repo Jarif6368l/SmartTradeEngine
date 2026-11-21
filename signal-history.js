@@ -176,6 +176,8 @@ function writeHistoryAtomic(
   }
 
 
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+
   const tmp =
     `${filePath}.tmp`;
 
@@ -230,7 +232,10 @@ function writeHistoryAtomic(
     fs.writeFileSync(
       tmp,
       json,
-      "utf8"
+      {
+        encoding: "utf8",
+        mode: 0o600
+      }
     );
 
 
