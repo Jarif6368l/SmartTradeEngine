@@ -105,7 +105,7 @@ function parseArgs(argv) {
 
 function main(argv = process.argv.slice(2)) {
   const { command, options } = parseArgs(argv);
-  const source = path.resolve(options.file || path.join(process.cwd(), '.signal-history.json'));
+  const source = path.resolve(options.file || process.env.SIGNAL_HISTORY_FILE || path.join(process.cwd(), '.signal-history.json'));
   const backupDir = path.resolve(options.dir || path.join(process.cwd(), 'recovery-history'));
   if (command === 'backup') {
     console.log(JSON.stringify(backupHistory({ source, backupDir }), null, 2));
