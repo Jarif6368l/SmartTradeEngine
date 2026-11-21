@@ -2101,7 +2101,7 @@ async function sendTelegram(text) {
   // before a connection dropped, so a retry can rarely produce a duplicate alert.
   for (let attempt = 1; attempt <= 2; attempt += 1) {
     try {
-      const result = await fetchWithTimeout(fetch, url, requestOptions, 10000);
+      const result = await fetchWithTimeout(fetch, url, requestOptions, 20000);
       if (result.response.ok && result.data.ok && result.data.result && result.data.result.message_id) {
         console.log("[Telegram] Message sent successfully (ID: " + result.data.result.message_id + ")");
         return result.data.result;
@@ -2111,8 +2111,8 @@ async function sendTelegram(text) {
     } catch (error) {
       const details = telegramNetworkErrorDetails(error);
       if (attempt < 2 && isRetryableTelegramNetworkError(error)) {
-        console.warn("[Telegram] Transient network failure (" + details + "); retrying once after 800ms.");
-        await new Promise(resolve => setTimeout(resolve, 800));
+        console.warn("[Telegram] Transient network failure (" + details + "); retrying once after 1500ms.");
+        await new Promise(resolve => setTimeout(resolve, 1500));
         continue;
       }
       console.error("[Telegram] Error: " + String(error && error.message || error) + " [" + details + "]");
