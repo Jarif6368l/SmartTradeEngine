@@ -74,6 +74,22 @@ const CACHE_TTL =
 const marketCache =
   new Map();
 
+// Coalesce identical concurrent Twelve Data candle requests to avoid wasting credits.
+const twelveDataCandleInFlight = new Map();
+
+async function runSingleFlight(map, key, task) {
+  const existing = map.get(key);
+  if (existing) return existing;
+
+  const pending = Promise.resolve().then(task);
+  map.set(key, pending);
+  try {
+    return await pending;
+  } finally {
+    if (map.get(key) === pending) map.delete(key);
+  }
+}
+
 const API_RATE_WINDOW_MS =
   60 * 1000;
 
@@ -12747,11 +12763,22 @@ async function fetchMarketCandles(
     );
   }
 
-  return fetchTwelveCandles(
-    symbol,
+  const requestKey = [
+    String(symbol || "").trim().toUpperCase(),
     interval,
-    exchange,
-    outputsize
+    cleanExchange,
+    String(outputsize == null ? "" : outputsize)
+  ].join("|");
+
+  return runSingleFlight(
+    twelveDataCandleInFlight,
+    requestKey,
+    () => fetchTwelveCandles(
+      symbol,
+      interval,
+      exchange,
+      outputsize
+    )
   );
 }
 
