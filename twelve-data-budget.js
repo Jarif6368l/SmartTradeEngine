@@ -23,8 +23,15 @@ function normalizeState(state) {
   if (!state || typeof state !== "object" || Array.isArray(state)) {
     throw new TypeError("Twelve Data budget state must be an object");
   }
+  if (state.watcherCredits === undefined) {
+    state.watcherCredits = 0;
+    return state;
+  }
   const used = Number(state.watcherCredits);
-  state.watcherCredits = Number.isFinite(used) ? Math.max(0, Math.floor(used)) : 0;
+  // Corrupt/negative counters fail closed instead of granting a fresh allowance.
+  state.watcherCredits = Number.isFinite(used) && used >= 0
+    ? Math.floor(used)
+    : DAILY_CREDIT_BUDGET;
   return state;
 }
 
