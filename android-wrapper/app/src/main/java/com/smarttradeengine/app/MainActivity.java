@@ -76,7 +76,9 @@ public class MainActivity extends Activity {
             return "https".equalsIgnoreCase(uri.getScheme())
                 && uri.getHost() != null
                 && !uri.getHost().isEmpty()
-                && uri.getUserInfo() == null;
+                && uri.getUserInfo() == null
+                && uri.getQuery() == null
+                && uri.getFragment() == null;
         } catch (Exception ignored) {
             return false;
         }
