@@ -2,10 +2,12 @@ const fs = require("fs");
 const path = require("path");
 
 const HISTORY_FILE =
-  path.join(
-    __dirname,
-    ".signal-history.json"
-  );
+  process.env.SIGNAL_HISTORY_FILE
+    ? path.resolve(process.env.SIGNAL_HISTORY_FILE)
+    : path.join(
+        __dirname,
+        ".signal-history.json"
+      );
 
 
 
