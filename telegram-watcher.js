@@ -909,6 +909,8 @@ function writeStateAtomic(
     `${filePath}.prev.tmp`;
 
 
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+
   const json =
     JSON.stringify(
       state,
@@ -960,7 +962,10 @@ function writeStateAtomic(
     fs.writeFileSync(
       tmpFile,
       json,
-      "utf8"
+      {
+        encoding: "utf8",
+        mode: 0o600
+      }
     );
 
 
