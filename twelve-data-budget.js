@@ -29,7 +29,7 @@ function normalizeState(state) {
   }
   const used = Number(state.watcherCredits);
   // Corrupt/negative counters fail closed instead of granting a fresh allowance.
-  state.watcherCredits = Number.isFinite(used) && used >= 0
+  state.watcherCredits = state.watcherCredits !== null && Number.isFinite(used) && used >= 0
     ? Math.floor(used)
     : DAILY_CREDIT_BUDGET;
   return state;
