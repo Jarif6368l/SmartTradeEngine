@@ -15,4 +15,6 @@ test("Twelve Data watcher daily safety budget is fixed at 600", () => {
 test("daily watcher budget resets by Asia/Kolkata calendar date", () => {
   assert.match(source, /const today = currentIstDay\(\);[\s\S]{0,220}watcherState\.day !== today/);
   assert.doesNotMatch(source, /watcherState\.day !== new Date\(\)\.toISOString\(\)\.slice\(0, 10\)/);
+  assert.match(source, /TELEGRAM_WATCH_STATE_FILE/);
+  assert.match(source, /if \(!saveState\(\)\)[\s\S]{0,180}credit reservation could not be persisted/);
 });
