@@ -12,7 +12,7 @@ The application enforces a fixed ceiling of **600 Twelve Data REST request credi
 
 The counter covers Twelve Data REST requests made by the market catalog, candle endpoints, current-candle endpoint, and Telegram watcher. Cached responses do not consume a credit. A request reserves its credit before the outbound call, so failed provider requests are conservatively counted. Once 600 credits are reserved, further Twelve Data REST calls are blocked until the next IST day.
 
-This is the application's daily safety ceiling; it is not a statement about Twelve Data's separate plan-level per-minute quota. WebSocket subscriptions are not REST credits and have a separate connection cap.
+This is the application's daily safety ceiling; it is not a statement about Twelve Data's separate plan-level per-minute quota. WebSocket subscriptions are not REST credits and have a separate connection cap of 20 browser clients, same-host Origin validation, and a per-client subscription cooldown. Run a single Render instance for this local-file-backed counter; multiple instances would need a shared atomic quota store.
 
 ### Persisting the counter on Render
 
