@@ -46,7 +46,19 @@ const {
   exportSignalHistory
 } = require("./signal-history");
 const { createPrivateHistoryApiAuth } = require("./private-history-api-auth");
-const requirePrivateHistoryApiAuth = createPrivateHistoryApiAuth();
+const requirePrivateHistoryApiToken = createPrivateHistoryApiAuth();
+let historyRestoreComplete = false;
+
+function requirePrivateHistoryApiAuth(req, res, next) {
+  if (!historyRestoreComplete) {
+    res.setHeader("Cache-Control", "no-store");
+    return res.status(503).json({
+      ok: false,
+      error: "Signal history restore is not complete"
+    });
+  }
+  return requirePrivateHistoryApiToken(req, res, next);
+}
 
 
 const app =
@@ -13569,9 +13581,11 @@ function startWatcherAfterHistoryRestore() {
 async function restoreHistoryAndStartWatcher() {
   try {
     const result = await downloadFromCloud();
+    historyRestoreComplete = true;
     console.log("[Cloud Sync] Initial history restore completed:", result);
     startWatcherAfterHistoryRestore();
   } catch (error) {
+    historyRestoreComplete = false;
     console.error("[Cloud Sync] Initial restore failed; watcher remains paused:", error.message);
     const retry = setTimeout(restoreHistoryAndStartWatcher, 60 * 1000);
     if (typeof retry.unref === "function") retry.unref();
