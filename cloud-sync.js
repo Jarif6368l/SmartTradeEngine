@@ -58,8 +58,17 @@ function mergeHistoryRecords(localRows, remoteRows) {
 
 function readLocalHistory() {
   if (!fs.existsSync(HISTORY_FILE)) return [];
-  const parsed = JSON.parse(fs.readFileSync(HISTORY_FILE, "utf8"));
-  return validateHistoryRecords(parsed);
+  try {
+    return validateHistoryRecords(JSON.parse(fs.readFileSync(HISTORY_FILE, "utf8")));
+  } catch (primaryError) {
+    const previous = `${HISTORY_FILE}.prev`;
+    if (!fs.existsSync(previous)) {
+      throw new Error(`Local signal history is unreadable and no recovery copy exists: ${primaryError.message}`);
+    }
+    const recovered = validateHistoryRecords(JSON.parse(fs.readFileSync(previous, "utf8")));
+    console.warn("[Cloud Sync] Recovered local history from the previous generation.");
+    return recovered;
+  }
 }
 
 function writeHistoryAtomic(rows) {
@@ -81,10 +90,17 @@ function writeHistoryAtomic(rows) {
     // Rotate only a valid current generation; never replace a good backup
     // with a corrupt or partially written primary file.
     if (fs.existsSync(HISTORY_FILE)) {
-      const current = JSON.parse(fs.readFileSync(HISTORY_FILE, "utf8"));
-      validateHistoryRecords(current);
-      fs.copyFileSync(HISTORY_FILE, previousTemp);
-      fs.renameSync(previousTemp, previous);
+      try {
+        const current = JSON.parse(fs.readFileSync(HISTORY_FILE, "utf8"));
+        validateHistoryRecords(current);
+        fs.copyFileSync(HISTORY_FILE, previousTemp);
+        fs.renameSync(previousTemp, previous);
+      } catch (currentError) {
+        // Keep a corrupt primary for forensic recovery; never replace the good .prev.
+        const corruptCopy = `${HISTORY_FILE}.corrupt.${Date.now()}`;
+        fs.renameSync(HISTORY_FILE, corruptCopy);
+        console.warn("[Cloud Sync] Preserved unreadable primary history as " + path.basename(corruptCopy));
+      }
     }
     fs.renameSync(temp, HISTORY_FILE);
   } catch (error) {
@@ -195,7 +211,7 @@ async function uploadToCloud() {
     const remote = await readGistHistory(gist);
     const merged = remote.rows ? mergeHistoryRecords(rows, remote.rows) : rows;
     const filename = remote.filename || chooseGistFile(gist.files) || CANONICAL_FILENAME;
-    if (merged.length !== rows.length || merged.some((row, index) => row.id !== rows[index]?.id)) {
+    if (JSON.stringify(merged) !== JSON.stringify(rows)) {
       writeHistoryAtomic(merged);
     }
     const response = await fetchWithTimeout(GIST_URL, {
