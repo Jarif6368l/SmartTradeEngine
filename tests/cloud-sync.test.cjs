@@ -52,3 +52,9 @@ test("history merge uses the newest valid timestamp field on each record", () =>
   const merged = cloud.mergeHistoryRecords(local, remote);
   assert.equal(merged[0].outcome, "SL_HIT");
 });
+
+test("history validation normalizes legacy numeric IDs and detects normalized duplicates", () => {
+  const rows = [{ id: 123 }];
+  assert.equal(cloud.validateHistoryRecords(rows)[0].id, "123");
+  assert.throws(() => cloud.validateHistoryRecords([{ id: 123 }, { id: "123" }]), /Duplicate/);
+});
