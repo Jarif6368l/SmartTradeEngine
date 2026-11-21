@@ -3868,6 +3868,10 @@ async function scanMarket(
             pendingText
           );
 
+        if (!telegramResult || !telegramResult.message_id) {
+          throw new Error("Telegram did not confirm pending outcome delivery");
+        }
+
         watcherState.alerts[
           earlyPairKey
         ] = {
@@ -4055,6 +4059,10 @@ async function scanMarket(
         await sendTelegram(
           outcomeText
         );
+
+      if (!telegramResult || !telegramResult.message_id) {
+        throw new Error("Telegram did not confirm outcome delivery");
+      }
 
       outcomeAlertSent =
         true;
