@@ -864,12 +864,6 @@ marketIndex =
 watcherState.marketIndex =
   marketIndex;
 
-function getApiKeyHash() {
-  const key = String(process.env.TWELVE_DATA_API_KEY || "");
-  if (!key) return "no-key";
-  return require("crypto").createHash("md5").update(key).digest("hex").slice(0, 8);
-}
-
 function resetDailyBudgetIfNeeded() {
   const today = currentIstDay();
   if (watcherState.day !== today) {
