@@ -6,46 +6,8 @@
         id
       );
 
-  let privateHistoryTokenPrompt = null;
-
   async function privateHistoryFetch(url, options = {}) {
-    const key = "smarttrade.privateHistoryApiToken";
-    let token = "";
-    try {
-      token = sessionStorage.getItem(key) || "";
-    } catch {}
-
-    const send = value => {
-      const headers = new Headers(options.headers || {});
-      if (value) headers.set("Authorization", "Bearer " + value);
-      return fetch(url, { ...options, headers });
-    };
-
-    let response = await send(token);
-    if (response.status !== 401) return response;
-
-    if (!privateHistoryTokenPrompt) {
-      privateHistoryTokenPrompt = Promise.resolve().then(() =>
-        window.prompt("Private History access token (set by the server owner in Render):")
-      ).finally(() => {
-        privateHistoryTokenPrompt = null;
-      });
-    }
-
-    const entered = await privateHistoryTokenPrompt;
-    if (!entered) return response;
-    token = String(entered).trim();
-    if (!token) return response;
-
-    try {
-      sessionStorage.setItem(key, token);
-    } catch {}
-
-    response = await send(token);
-    if (response.status === 401) {
-      try { sessionStorage.removeItem(key); } catch {}
-    }
-    return response;
+    return fetch(url, options);
   }
 
   let allHistory = [];
