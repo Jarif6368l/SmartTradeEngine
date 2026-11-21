@@ -1,9 +1,9 @@
 {
   "project": "SmartTradeEngine",
-  "version": "1.0.0",
-  "buildDate": "2026-10-28",
-  "signature": "STE-STABLE-2026-10-28",
-  "status": "PRODUCTION-STABLE",
+  "version": "1.0.1",
+  "buildDate": "2026-11-21",
+  "signature": "STE-SAFETY-REVIEW-2026-11-21",
+  "status": "SAFETY-REVIEW",
   "features": [
     "1D Alignment Strict Filter",
     "SMC Premium/Discount Filter",
@@ -15,5 +15,5 @@
     "8-Hour Key Rotation",
     "Rate Limiter Queue"
   ],
-  "lastCommit": "5f88fe4"
+  "lastCommit": "pending"
 }
