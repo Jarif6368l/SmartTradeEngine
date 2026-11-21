@@ -38,3 +38,12 @@ test("atomic history writer produces parseable data without leaving a temporary 
   assert.deepEqual(JSON.parse(fs.readFileSync(process.env.SIGNAL_HISTORY_FILE, "utf8")), rows);
   assert.equal(fs.readdirSync(tempDir).some(name => name.endsWith(".tmp")), false);
 });
+
+test("atomic cloud restore preserves a corrupt primary before writing validated remote history", () => {
+  const file = process.env.SIGNAL_HISTORY_FILE;
+  fs.writeFileSync(file, "{corrupt local history");
+  const rows = [{ id: "restored-from-cloud", outcome: "OPEN" }];
+  cloud.writeHistoryAtomic(rows);
+  assert.deepEqual(JSON.parse(fs.readFileSync(file, "utf8")), rows);
+  assert.ok(fs.readdirSync(tempDir).some(name => name.includes(".corrupt.")));
+});
