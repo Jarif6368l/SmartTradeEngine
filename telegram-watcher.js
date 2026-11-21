@@ -1214,8 +1214,26 @@ function budgetAvailable() {
 
 function reserveTwelveDataCredit() {
   resetDailyBudgetIfNeeded();
+
+  const previous = {
+    day: watcherState.day,
+    watcherCredits: watcherState.watcherCredits,
+    lastCreditAt: watcherState.lastCreditAt
+  };
+
   const status = reserveCredit(watcherState);
-  saveState();
+  watcherState.marketIndex = normalizeMarketIndex(marketIndex);
+
+  try {
+    // A credit is not spent until its reservation is durably written.
+    writeStateAtomic(STATE_FILE, watcherState);
+  } catch (error) {
+    watcherState.day = previous.day;
+    watcherState.watcherCredits = previous.watcherCredits;
+    watcherState.lastCreditAt = previous.lastCreditAt;
+    throw new Error("Twelve Data budget ledger could not be persisted; request blocked: " + error.message);
+  }
+
   return status;
 }
 
