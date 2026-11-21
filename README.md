@@ -18,11 +18,9 @@ SmartTradeEngine is a Node.js / Express market-analysis dashboard with Telegram 
 | `GIST_ID`, `GITHUB_TOKEN` | Optional signal-history cloud sync |
 | `SIGNAL_HISTORY_FILE` | Optional path for signal history on a Render persistent disk |
 | `NOTIFICATIONS_FILE` | Optional path for notifications on a Render persistent disk |
-| `SIGNAL_HISTORY_API_TOKEN` | Private history API access; at least 32 and at most 256 characters |
 | `TELEGRAM_WATCH_STATE_FILE` | Optional path for persistent watcher state and the 600/day counter |
 | `UPSTOX_API_KEY`, `UPSTOX_API_SECRET`, `UPSTOX_REDIRECT_URI` | Existing Upstox OAuth configuration |
 
-Generate a private history API token outside the repository (for example, `openssl rand -hex 32`) and set it as `SIGNAL_HISTORY_API_TOKEN` in Render. The History page prompts for this token when the server returns HTTP 401. It is kept only in the current browser tab's session storage. If the variable is missing or invalid, the private endpoints fail closed with HTTP 503.
 
 ## Twelve Data safety budget
 
