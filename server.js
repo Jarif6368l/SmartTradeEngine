@@ -63,7 +63,7 @@ const HOST =
     process.env.HOST ||
     "0.0.0.0"
   ).trim() ||
-  "127.0.0.1";
+  "0.0.0.0";
 
 const CACHE_TTL =
   10 * 60 * 1000;
