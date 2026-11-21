@@ -153,7 +153,11 @@ async function readGistHistory(gist) {
   const file = gist.files[filename];
   let content = file.content;
   if (file.truncated && file.raw_url) {
-    const rawResponse = await fetchWithTimeout(file.raw_url, { headers: authHeaders() });
+    const rawUrl = new URL(file.raw_url);
+    if (rawUrl.protocol !== "https:" || rawUrl.hostname !== "gist.githubusercontent.com") {
+      throw new Error("Gist raw file URL failed host validation");
+    }
+    const rawResponse = await fetchWithTimeout(rawUrl.toString(), { headers: authHeaders() });
     if (!rawResponse.ok) throw new Error(`Gist raw file download failed (HTTP ${rawResponse.status})`);
     content = await rawResponse.text();
   }
