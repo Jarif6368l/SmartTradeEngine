@@ -258,10 +258,12 @@ const ROTATION_MS =
 const DAILY_CREDIT_BUDGET = 600;
 
 const STATE_FILE =
-  path.join(
-    __dirname,
-    ".telegram-watcher-state.json"
-  );
+  process.env.TELEGRAM_WATCH_STATE_FILE
+    ? path.resolve(process.env.TELEGRAM_WATCH_STATE_FILE)
+    : path.join(
+        __dirname,
+        ".telegram-watcher-state.json"
+      );
 
 
 
