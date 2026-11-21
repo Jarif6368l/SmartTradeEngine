@@ -786,7 +786,7 @@ function readStateFile(
       Number.isFinite(rawCreditCount) &&
       rawCreditCount >= 0) ||
     (typeof rawCreditCount === "string" &&
-      /^\\d+$/.test(rawCreditCount));
+      /^\d+$/.test(rawCreditCount));
 
   // Corrupt/negative stored counters fail closed at the ceiling.
   const safeCreditCount = !hasCreditCount
