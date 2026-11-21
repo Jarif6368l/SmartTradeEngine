@@ -34,13 +34,20 @@ function validateHistoryRecords(value) {
     if (!row || typeof row !== "object" || Array.isArray(row)) {
       throw new TypeError(`Invalid signal history record at index ${index}`);
     }
-    if (typeof row.id !== "string" || !row.id.trim()) {
+    const normalizedId =
+      typeof row.id === "string"
+        ? row.id.trim()
+        : Number.isSafeInteger(row.id)
+          ? String(row.id)
+          : "";
+    if (!normalizedId) {
       throw new TypeError(`Signal history record at index ${index} has no valid id`);
     }
-    if (ids.has(row.id)) {
-      throw new TypeError(`Duplicate signal history id: ${row.id}`);
+    row.id = normalizedId;
+    if (ids.has(normalizedId)) {
+      throw new TypeError(`Duplicate signal history id: ${normalizedId}`);
     }
-    ids.add(row.id);
+    ids.add(normalizedId);
   }
   return value;
 }
