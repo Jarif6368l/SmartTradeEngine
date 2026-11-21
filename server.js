@@ -14923,6 +14923,9 @@ function allowLiveHandshake(ip) {
     for (const [key, value] of liveHandshakeWindowsByIp) {
       if (now - value.startedAt >= 60 * 1000) liveHandshakeWindowsByIp.delete(key);
     }
+    while (liveHandshakeWindowsByIp.size > 500) {
+      liveHandshakeWindowsByIp.delete(liveHandshakeWindowsByIp.keys().next().value);
+    }
   }
   return true;
 }
