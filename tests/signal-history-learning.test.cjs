@@ -45,14 +45,14 @@ test("learning evidence counts TP1 milestones even when the final outcome is SL"
     }
   ];
 
-  history.writeHistoryAtomic(rows);
+  history.writeHistoryAtomic(process.env.SIGNAL_HISTORY_FILE, rows);
 
   const completed = history.computeLearningEvidence();
   assert.equal(completed.sampleCount, 3);
   assert.equal(completed.t1Hit, 2);
   assert.equal(completed.t2Hit, 1);
   assert.equal(completed.slHit, 2);
-  assert.equal(completed.t1Rate, 2 / 3);
+  assert.equal(completed.t1Rate, 0.6667);
 
   const includingOpen = history.computeLearningEvidence({
     excludeOpen: false
@@ -62,7 +62,7 @@ test("learning evidence counts TP1 milestones even when the final outcome is SL"
 });
 
 test("legacy TP2 rows count as having passed TP1 even without a T1 timestamp", () => {
-  history.writeHistoryAtomic([
+  history.writeHistoryAtomic(process.env.SIGNAL_HISTORY_FILE, [
     {
       id: "legacy-t2",
       status: "INACTIVE",
