@@ -77,7 +77,8 @@ test("lifetime stats expose every terminal outcome, including expired and replac
   const summary = history.getSignalHistoryStats().summary;
   assert.equal(summary.total, 9);
   assert.equal(summary.active, 1);
-  assert.equal(summary.t1Touched, 1);
+  // T2_HIT also implies TP1 for legacy rows without a stored t1HitAt timestamp.
+  assert.equal(summary.t1Touched, 2);
   assert.equal(summary.t2Hit, 1);
   assert.equal(summary.slHit, 2);
   assert.equal(summary.invalidated, 1);
