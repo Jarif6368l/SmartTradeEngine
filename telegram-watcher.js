@@ -2828,7 +2828,8 @@ function terminalOutcome(
     "AMBIGUOUS",
     "INVALIDATED",
     "EXPIRED",
-    "STYLE_CHANGED"
+    "STYLE_CHANGED",
+    "SETUP_REPLACED"
   ].includes(
     String(outcome || "")
       .toUpperCase()

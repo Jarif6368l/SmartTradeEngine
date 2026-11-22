@@ -61,6 +61,37 @@ test("learning evidence counts TP1 milestones even when the final outcome is SL"
   assert.equal(includingOpen.t1Hit, 3);
 });
 
+test("lifetime stats expose every terminal outcome, including expired and replaced setups", () => {
+  history.writeHistoryAtomic(process.env.SIGNAL_HISTORY_FILE, [
+    { id: "active", status: "ACTIVE", outcome: "OPEN" },
+    { id: "tp2", status: "INACTIVE", outcome: "T2_HIT" },
+    { id: "sl", status: "INACTIVE", outcome: "SL_HIT" },
+    { id: "invalid", status: "INACTIVE", outcome: "INVALIDATED" },
+    { id: "ambiguous", status: "INACTIVE", outcome: "AMBIGUOUS" },
+    { id: "expired", status: "INACTIVE", outcome: "EXPIRED" },
+    { id: "style", status: "INACTIVE", outcome: "STYLE_CHANGED" },
+    { id: "replaced", status: "INACTIVE", outcome: "SETUP_REPLACED" },
+    { id: "sl-after-t1", status: "INACTIVE", outcome: "SL_HIT", t1HitAt: "2026-11-06T01:00:00.000Z" }
+  ]);
+
+  const summary = history.getSignalHistoryStats().summary;
+  assert.equal(summary.total, 9);
+  assert.equal(summary.active, 1);
+  // T2_HIT also implies TP1 for legacy rows without a stored t1HitAt timestamp.
+  assert.equal(summary.t1Touched, 2);
+  assert.equal(summary.t2Hit, 1);
+  assert.equal(summary.slHit, 2);
+  assert.equal(summary.invalidated, 1);
+  assert.equal(summary.ambiguous, 1);
+  assert.equal(summary.expired, 1);
+  assert.equal(summary.styleChanged, 1);
+  assert.equal(summary.setupReplaced, 1);
+
+  const terminalTotal = summary.t2Hit + summary.slHit + summary.invalidated +
+    summary.ambiguous + summary.expired + summary.styleChanged + summary.setupReplaced;
+  assert.equal(summary.active + terminalTotal, summary.total);
+});
+
 test("legacy TP2 rows count as having passed TP1 even without a T1 timestamp", () => {
   history.writeHistoryAtomic(process.env.SIGNAL_HISTORY_FILE, [
     {

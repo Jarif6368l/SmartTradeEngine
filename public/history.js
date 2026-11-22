@@ -1915,6 +1915,12 @@ body.classList.toggle(
     $("statsStyleChanged").textContent =
       summary.styleChanged || 0;
 
+    $("statsExpired").textContent =
+      summary.expired || 0;
+
+    $("statsSetupReplaced").textContent =
+      summary.setupReplaced || 0;
+
     $("statsAmbiguous").textContent =
       summary.ambiguous || 0;
 
