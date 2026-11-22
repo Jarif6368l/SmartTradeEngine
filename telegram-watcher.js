@@ -15,6 +15,33 @@ const {
   deleteSignalHistory
 } = require("./signal-history");
 
+const { uploadToCloud } = require("./cloud-sync");
+
+function syncOutcomeHistoryToCloud(historyId, outcome) {
+  // The local atomic History write happens first. Push milestone/terminal
+  // changes immediately so a Render restart cannot wait for the 5-minute timer.
+  void uploadToCloud()
+    .then(result => {
+      if (result && result.skipped) {
+        console.warn(
+          `[Cloud Sync] ${outcome} history sync skipped: ${result.reason}`
+        );
+        return;
+      }
+
+      console.log(
+        `[Cloud Sync] ${outcome} history synced to cloud (${result?.uploaded ?? "ok"} records)`
+      );
+    })
+    .catch(error => {
+      console.error(
+        `[Cloud Sync] ${outcome} history sync failed:`,
+        error.message
+      );
+    });
+}
+
+
 
 /* === DEMO / PAPER TRADING HOOKS (isolated, fail-safe) === */
 
@@ -3295,6 +3322,7 @@ function trackSignalOutcome(
         }
       );
       notifyDemoOutcome(__demoAmbiguous);
+      syncOutcomeHistoryToCloud(historyId, "AMBIGUOUS");
       return __demoAmbiguous;
     }
 
@@ -3366,6 +3394,7 @@ function trackSignalOutcome(
         }
       );
       notifyDemoOutcome(__demoT2);
+      syncOutcomeHistoryToCloud(historyId, "T2_HIT");
       return __demoT2;
     }
 
@@ -3450,6 +3479,7 @@ function trackSignalOutcome(
         }
       );
       notifyDemoOutcome(__demoSL);
+      syncOutcomeHistoryToCloud(historyId, "SL_HIT");
       return __demoSL;
     }
 
@@ -3473,6 +3503,7 @@ function trackSignalOutcome(
 
   if (changed) {
 
+    const newlyRecordedT1 = Boolean(t1HitAt && !record.t1HitAt);
     const __demoFinal = updateSignalHistory(
       historyId,
       {
@@ -3500,6 +3531,9 @@ function trackSignalOutcome(
       }
     );
     notifyDemoOutcome(__demoFinal);
+    if (newlyRecordedT1) {
+      syncOutcomeHistoryToCloud(historyId, "T1_HIT");
+    }
     return __demoFinal;
   }
 
@@ -4127,9 +4161,13 @@ async function scanMarket(
       // Persist delivery on the signal record so it survives watcher restarts
       // even when the Render filesystem does not retain watcher-state files.
       try {
-        updateSignalHistory(previous.historyId, {
+        const persistedMarker = updateSignalHistory(previous.historyId, {
           telegramOutcomeAlerts
         });
+        if (!persistedMarker) {
+          throw new Error("Signal History record was not found for delivery marker");
+        }
+        syncOutcomeHistoryToCloud(previous.historyId, currentOutcome + "_DELIVERY");
       } catch (persistError) {
         console.error(
           `[Telegram Watcher] ${market.symbol} ${currentOutcome} delivery marker persistence failed:`,
