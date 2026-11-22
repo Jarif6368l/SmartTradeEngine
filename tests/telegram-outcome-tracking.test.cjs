@@ -67,6 +67,7 @@ function makeHarness(options = {}) {
   };
 
   let updateCount = 0;
+  const cloudSyncCalls = [];
 
   const context = {
     Date: FixedDate,
@@ -84,6 +85,10 @@ function makeHarness(options = {}) {
 
     notifyDemoOutcome() {},
 
+    syncOutcomeHistoryToCloud(id, outcome) {
+      cloudSyncCalls.push({ id, outcome });
+    },
+
     deriveSlReason() {
       return "Regression test";
     }
@@ -100,7 +105,8 @@ function makeHarness(options = {}) {
     },
     get updateCount() {
       return updateCount;
-    }
+    },
+    cloudSyncCalls
   };
 }
 
@@ -345,4 +351,26 @@ test("malformed OHLC candles are ignored for bullish and bearish outcomes", () =
       assert.equal(result.maxRReached, 0);
     }
   }
+});
+
+test("outcome milestones request immediate cloud sync", () => {
+  const harness = makeHarness();
+
+  const t1 = harness.track(m15(
+    candle(SENT_MS + INTERVAL, 106, 99)
+  ));
+  assert.equal(t1.outcome, "T1_HIT");
+  assert.deepEqual(
+    harness.cloudSyncCalls.map(call => call.outcome),
+    ["T1_HIT"]
+  );
+
+  const sl = harness.track(m15(
+    candle(SENT_MS + 2 * INTERVAL, 102, 94)
+  ));
+  assert.equal(sl.outcome, "SL_HIT");
+  assert.deepEqual(
+    harness.cloudSyncCalls.map(call => call.outcome),
+    ["T1_HIT", "SL_HIT"]
+  );
 });

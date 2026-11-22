@@ -1261,8 +1261,22 @@ function computeLearningEvidence(filters = {}) {
 
 
   const slHit = countOutcome("SL_HIT");
-  const t1Hit = countOutcome("T1_HIT");
-  const t2Hit = countOutcome("T2_HIT");
+
+  // T1 is a milestone, not a terminal outcome. A trade can touch T1
+  // and later finish as T2_HIT or SL_HIT, so count the durable timestamp
+  // as well as legacy outcome labels where older rows lack timestamps.
+  const t1Hit = matched.filter(row => {
+    const outcome = String(row.outcome || "").toUpperCase();
+    return Boolean(row.t1HitAt) ||
+      outcome === "T1_HIT" ||
+      outcome === "T2_HIT";
+  }).length;
+
+  const t2Hit = matched.filter(row =>
+    Boolean(row.t2HitAt) ||
+    String(row.outcome || "").toUpperCase() === "T2_HIT"
+  ).length;
+
   const invalidated = countOutcome("INVALIDATED");
 
 
