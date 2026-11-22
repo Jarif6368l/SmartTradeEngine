@@ -13,6 +13,7 @@ const LEGACY_FILENAMES = [".signal-history.json"];
 const GIST_URL = GIST_ID ? `https://api.github.com/gists/${GIST_ID}` : null;
 let downloadInFlight = null;
 let uploadInFlight = null;
+let uploadRequestedAgain = false;
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = 15000) {
   const controller = new AbortController();
@@ -200,7 +201,12 @@ async function uploadToCloud() {
   if (!GIST_ID || !GITHUB_TOKEN) {
     return { skipped: true, reason: "GIST_ID or GITHUB_TOKEN is not configured" };
   }
-  if (uploadInFlight) return uploadInFlight;
+  if (uploadInFlight) {
+    // If a milestone is saved while an older snapshot is uploading, queue one
+    // follow-up pass so that the newer local History is not left for the timer.
+    uploadRequestedAgain = true;
+    return uploadInFlight;
+  }
   uploadInFlight = (async () => {
     const local = readLocalHistory();
     const getResponse = await fetchWithTimeout(GIST_URL, { headers: authHeaders() });
@@ -226,6 +232,12 @@ async function uploadToCloud() {
     throw error;
   } finally {
     uploadInFlight = null;
+    if (uploadRequestedAgain) {
+      uploadRequestedAgain = false;
+      void uploadToCloud().catch(error => {
+        console.error("[Cloud Sync] Follow-up upload failed:", error.message);
+      });
+    }
   }
 }
 
