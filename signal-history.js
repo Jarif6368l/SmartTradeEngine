@@ -810,11 +810,20 @@ function getSignalHistoryStats() {
 
       t2Hit,
 
+      // SL HIT is reserved for a direct stop before TP1.
+      // Stops reached after TP1 are reported separately.
       slHit:
         rows.filter(
           row =>
-            outcome(row) ===
-              "SL_HIT"
+            outcome(row) === "SL_HIT" &&
+            !row.t1HitAt
+        ).length,
+
+      slAfterT1:
+        rows.filter(
+          row =>
+            outcome(row) === "SL_AFTER_T1" ||
+            (outcome(row) === "SL_HIT" && Boolean(row.t1HitAt))
         ).length,
 
       invalidated:

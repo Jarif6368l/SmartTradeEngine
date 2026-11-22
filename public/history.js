@@ -351,9 +351,13 @@
   ) {
 
     if (row.outcome) {
-      return String(
-        row.outcome
-      ).toUpperCase();
+      const outcome = String(row.outcome).toUpperCase();
+      // Legacy records store SL_HIT for both cases; use the saved TP1
+      // timestamp to show post-TP1 stops as a separate outcome.
+      if (outcome === "SL_HIT" && row.t1HitAt) {
+        return "SL_AFTER_T1";
+      }
+      return outcome;
     }
 
     return row.status === "ACTIVE"
@@ -393,7 +397,7 @@
       return "outcome-t2";
     }
 
-    if (value === "SL_HIT") {
+    if (value === "SL_HIT" || value === "SL_AFTER_T1") {
       return "outcome-sl";
     }
 
@@ -1908,6 +1912,9 @@ body.classList.toggle(
 
     $("statsSL").textContent =
       summary.slHit || 0;
+
+    $("statsSLAfterT1").textContent =
+      summary.slAfterT1 || 0;
 
     $("statsInvalidated").textContent =
       summary.invalidated || 0;

@@ -80,15 +80,37 @@ test("lifetime stats expose every terminal outcome, including expired and replac
   // T2_HIT also implies TP1 for legacy rows without a stored t1HitAt timestamp.
   assert.equal(summary.t1Touched, 2);
   assert.equal(summary.t2Hit, 1);
-  assert.equal(summary.slHit, 2);
+  assert.equal(summary.slHit, 1);
+  assert.equal(summary.slAfterT1, 1);
   assert.equal(summary.invalidated, 1);
   assert.equal(summary.ambiguous, 1);
   assert.equal(summary.expired, 1);
   assert.equal(summary.styleChanged, 1);
   assert.equal(summary.setupReplaced, 1);
 
-  const terminalTotal = summary.t2Hit + summary.slHit + summary.invalidated +
+  const terminalTotal = summary.t2Hit + summary.slHit + summary.slAfterT1 + summary.invalidated +
     summary.ambiguous + summary.expired + summary.styleChanged + summary.setupReplaced;
+  assert.equal(summary.active + terminalTotal, summary.total);
+});
+
+
+test("lifetime statistics separate direct SL from SL after TP1", () => {
+  history.writeHistoryAtomic(process.env.SIGNAL_HISTORY_FILE, [
+    { id: "direct-sl", status: "INACTIVE", outcome: "SL_HIT", slHitAt: "2026-11-07T01:00:00.000Z", t1HitAt: null },
+    { id: "sl-after-t1", status: "INACTIVE", outcome: "SL_HIT", slHitAt: "2026-11-07T02:00:00.000Z", t1HitAt: "2026-11-07T01:30:00.000Z" },
+    { id: "tp2", status: "INACTIVE", outcome: "T2_HIT", t1HitAt: "2026-11-07T03:00:00.000Z", t2HitAt: "2026-11-07T04:00:00.000Z" },
+    { id: "active", status: "ACTIVE", outcome: "OPEN" }
+  ]);
+
+  const summary = history.getSignalHistoryStats().summary;
+  assert.equal(summary.total, 4);
+  assert.equal(summary.active, 1);
+  assert.equal(summary.t1Touched, 2);
+  assert.equal(summary.t2Hit, 1);
+  assert.equal(summary.slHit, 1);
+  assert.equal(summary.slAfterT1, 1);
+
+  const terminalTotal = summary.t2Hit + summary.slHit + summary.slAfterT1;
   assert.equal(summary.active + terminalTotal, summary.total);
 });
 
