@@ -845,6 +845,13 @@ function getSignalHistoryStats() {
               "STYLE_CHANGED"
         ).length,
 
+      setupReplaced:
+        rows.filter(
+          row =>
+            outcome(row) ===
+              "SETUP_REPLACED"
+        ).length,
+
       averageSetupQuality:
         average(
           rows,
