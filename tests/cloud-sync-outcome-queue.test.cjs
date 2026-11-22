@@ -73,7 +73,7 @@ test("a History change during an upload triggers a follow-up cloud snapshot", as
     };
   };
 
-  cloud.writeHistoryAtomic(process.env.SIGNAL_HISTORY_FILE, [
+  cloud.writeHistoryAtomic([
     {
       id: "trade-1",
       status: "ACTIVE",
@@ -85,7 +85,7 @@ test("a History change during an upload triggers a follow-up cloud snapshot", as
   const firstUpload = cloud.uploadToCloud();
   await firstGetStarted;
 
-  cloud.writeHistoryAtomic(process.env.SIGNAL_HISTORY_FILE, [
+  cloud.writeHistoryAtomic([
     {
       id: "trade-1",
       status: "ACTIVE",
