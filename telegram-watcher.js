@@ -4025,6 +4025,18 @@ async function scanMarket(
         previous.quality = orphanedActive.setupQuality;
         previous.rr1 = orphanedActive.rr1;
         previous.rr2 = orphanedActive.rr2;
+        // Restore Telegram outcome-delivery markers from durable signal history.
+        const deliveredOutcomes =
+          orphanedActive.telegramOutcomeAlerts &&
+          typeof orphanedActive.telegramOutcomeAlerts === "object"
+            ? orphanedActive.telegramOutcomeAlerts
+            : {};
+        previous.telegramOutcomeAlerts = deliveredOutcomes;
+        previous.lastOutcomeAlert =
+          previous.lastOutcomeAlert ||
+          (deliveredOutcomes.T1_HIT ? "T1_HIT" :
+            deliveredOutcomes.T2_HIT ? "T2_HIT" :
+            deliveredOutcomes.SL_HIT ? "SL_HIT" : null);
         console.log(`[Recovery] Re-attached orphaned ACTIVE trade ${orphanedActive.id} for ${market.symbol} (${orphanedActive.mode})`);
       }
     } catch (e) {
@@ -4063,8 +4075,15 @@ async function scanMarket(
         "T2_HIT",
         "SL_HIT"
       ].includes(currentOutcome) &&
-      previous.lastOutcomeAlert !==
-        currentOutcome
+      !(
+        previous.telegramOutcomeAlerts &&
+        previous.telegramOutcomeAlerts[currentOutcome]
+      ) &&
+      !(
+        outcomeRecord?.telegramOutcomeAlerts &&
+        outcomeRecord.telegramOutcomeAlerts[currentOutcome]
+      ) &&
+      previous.lastOutcomeAlert !== currentOutcome
     );
 
 
@@ -4095,10 +4114,34 @@ async function scanMarket(
       outcomeAlertSent =
         true;
 
+      const deliveredAt = new Date().toISOString();
+      const deliveryMarker = {
+        messageId: String(telegramResult.message_id),
+        deliveredAt
+      };
+      const telegramOutcomeAlerts = {
+        ...(outcomeRecord.telegramOutcomeAlerts || {}),
+        [currentOutcome]: deliveryMarker
+      };
+
+      // Persist delivery on the signal record so it survives watcher restarts
+      // even when the Render filesystem does not retain watcher-state files.
+      try {
+        updateSignalHistory(previous.historyId, {
+          telegramOutcomeAlerts
+        });
+      } catch (persistError) {
+        console.error(
+          `[Telegram Watcher] ${market.symbol} ${currentOutcome} delivery marker persistence failed:`,
+          persistError.message
+        );
+      }
+
       watcherState.alerts[
         pairKey
       ] = {
         ...previous,
+        telegramOutcomeAlerts,
 
         lastOutcomeAlert:
           currentOutcome,
@@ -4638,10 +4681,8 @@ function startTelegramTradeWatcher({
   watcherHealth.enabled =
     true;
 
-  // Send Startup Message to Telegram
-  if (typeof sendTelegram === "function") {
-    sendTelegram("✅ SmartTradeEngine Bot Started Successfully.\n\nMonitoring " + WATCH_MARKETS.length + " pairs...\nStrict Filters ACTIVE.");
-  }
+  // Startup is logged in Render. Avoid sending a Telegram message on every
+  // process boot/redeploy; repeated boot notifications obscure trade alerts.
 
 
   console.log(
