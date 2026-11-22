@@ -80,14 +80,15 @@ test("lifetime stats expose every terminal outcome, including expired and replac
   // T2_HIT also implies TP1 for legacy rows without a stored t1HitAt timestamp.
   assert.equal(summary.t1Touched, 2);
   assert.equal(summary.t2Hit, 1);
-  assert.equal(summary.slHit, 2);
+  assert.equal(summary.slHit, 1);
+  assert.equal(summary.slAfterT1, 1);
   assert.equal(summary.invalidated, 1);
   assert.equal(summary.ambiguous, 1);
   assert.equal(summary.expired, 1);
   assert.equal(summary.styleChanged, 1);
   assert.equal(summary.setupReplaced, 1);
 
-  const terminalTotal = summary.t2Hit + summary.slHit + summary.invalidated +
+  const terminalTotal = summary.t2Hit + summary.slHit + summary.slAfterT1 + summary.invalidated +
     summary.ambiguous + summary.expired + summary.styleChanged + summary.setupReplaced;
   assert.equal(summary.active + terminalTotal, summary.total);
 });
