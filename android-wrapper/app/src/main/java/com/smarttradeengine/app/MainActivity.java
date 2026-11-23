@@ -53,10 +53,13 @@ public class MainActivity extends Activity {
             }
         });
 
-        // Android 15 enforces edge-to-edge for targetSdk 35. Keep the WebView
-        // viewport inside system bars and display cutouts so dashboard content
-        // is not drawn underneath the status or navigation bars.
-        webView.setOnApplyWindowInsetsListener((view, insets) -> {
+        // Android 15 enforces edge-to-edge for apps targeting SDK 35.
+        // Apply system-bar insets to a real parent container, not the WebView:
+        // WebView's own drawing can extend beneath its padding on edge-to-edge
+        // windows, leaving the HTML header underneath status-bar icons.
+        android.widget.FrameLayout contentRoot = new android.widget.FrameLayout(this);
+        contentRoot.setBackgroundColor(android.graphics.Color.rgb(5, 18, 34));
+        contentRoot.setOnApplyWindowInsetsListener((view, insets) -> {
             int left;
             int top;
             int right;
@@ -76,11 +79,18 @@ public class MainActivity extends Activity {
                 bottom = insets.getSystemWindowInsetBottom();
             }
             view.setPadding(left, top, right, bottom);
-            return insets;
+            // The parent has handled the insets; do not dispatch them again
+            // into WebView, which may otherwise draw beneath the system bars.
+            return Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+                ? WindowInsets.CONSUMED
+                : insets.consumeSystemWindowInsets();
         });
-
-        setContentView(webView);
-        webView.requestApplyInsets();
+        contentRoot.addView(webView, new android.widget.FrameLayout.LayoutParams(
+            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+            android.view.ViewGroup.LayoutParams.MATCH_PARENT
+        ));
+        setContentView(contentRoot);
+        contentRoot.requestApplyInsets();
 
         String configured = BuildConfig.SERVER_URL == null ? "" : BuildConfig.SERVER_URL.trim();
         if (isValidHttpsUrl(configured)) {
