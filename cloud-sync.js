@@ -10,6 +10,9 @@ const GIST_ID = process.env.GIST_ID;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const CANONICAL_FILENAME = "signal-history.json";
 const LEGACY_FILENAMES = [".signal-history.json"];
+// An empty newly-created Gist is an explicit one-time reset instruction.
+// This marker prevents later restarts from erasing signals created after reset.
+const RESET_MARKER_FILENAME = ".signal-history-reset-v1";
 const GIST_URL = GIST_ID ? `https://api.github.com/gists/${GIST_ID}` : null;
 let downloadInFlight = null;
 let uploadInFlight = null;
@@ -181,7 +184,35 @@ async function downloadFromCloud() {
       console.warn("[Cloud Sync] No recognized history file in Gist; local history was left unchanged.");
       return { skipped: true, reason: "history file not found" };
     }
+
     const local = readLocalHistory();
+    if (remote.rows.length === 0 && !gist.files?.[RESET_MARKER_FILENAME]) {
+      // A new Gist containing [] is the user's explicit request to start fresh.
+      // Clear both generations before marking the reset, so a failed marker
+      // write safely retries the reset on the next restore attempt.
+      writeHistoryAtomic([]);
+      try {
+        fs.unlinkSync(`${HISTORY_FILE}.prev`);
+      } catch (error) {
+        if (error.code !== "ENOENT") throw error;
+      }
+
+      const markerResponse = await fetchWithTimeout(GIST_URL, {
+        method: "PATCH",
+        headers: authHeaders(true),
+        body: JSON.stringify({
+          files: {
+            [RESET_MARKER_FILENAME]: {
+              content: `Applied once at ${new Date().toISOString()}; prevents future empty-Gist restores from clearing newer local signals.`
+            }
+          }
+        })
+      });
+      await responseJson(markerResponse, "Gist reset marker update");
+      console.log(`[Cloud Sync] Applied one-time empty-Gist reset; cleared ${local.length} local signals and previous backup.`);
+      return { reset: true, cleared: local.length, filename: remote.filename };
+    }
+
     const merged = mergeHistoryRecords(local, remote.rows);
     writeHistoryAtomic(merged);
     console.log(`[Cloud Sync] Restored/merged ${remote.rows.length} cloud and ${local.length} local signals (${merged.length} total).`);
