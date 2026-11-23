@@ -13,6 +13,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
 import android.widget.Toast;
+import android.view.WindowInsets;
 
 public class MainActivity extends Activity {
     private static final String PREFS = "smarttrade_settings";
@@ -52,7 +53,34 @@ public class MainActivity extends Activity {
             }
         });
 
+        // Android 15 enforces edge-to-edge for targetSdk 35. Keep the WebView
+        // viewport inside system bars and display cutouts so dashboard content
+        // is not drawn underneath the status or navigation bars.
+        webView.setOnApplyWindowInsetsListener((view, insets) -> {
+            int left;
+            int top;
+            int right;
+            int bottom;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                android.graphics.Insets bars = insets.getInsets(
+                    WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout()
+                );
+                left = bars.left;
+                top = bars.top;
+                right = bars.right;
+                bottom = bars.bottom;
+            } else {
+                left = insets.getSystemWindowInsetLeft();
+                top = insets.getSystemWindowInsetTop();
+                right = insets.getSystemWindowInsetRight();
+                bottom = insets.getSystemWindowInsetBottom();
+            }
+            view.setPadding(left, top, right, bottom);
+            return insets;
+        });
+
         setContentView(webView);
+        webView.requestApplyInsets();
 
         String configured = BuildConfig.SERVER_URL == null ? "" : BuildConfig.SERVER_URL.trim();
         if (isValidHttpsUrl(configured)) {
