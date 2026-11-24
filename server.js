@@ -2798,6 +2798,12 @@ async function fetchOecdCsvSeries(
   label
 ) {
 
+  // The watcher reserves its own daily budget only for a real provider
+  // request. A valid server-cache hit returns above without consuming it.
+  if (typeof options.beforeProviderRequest === "function") {
+    options.beforeProviderRequest();
+  }
+
   const controller =
     new AbortController();
 
@@ -12697,7 +12703,8 @@ async function fetchMarketCandles(
   symbol,
   interval,
   exchange,
-  outputsize
+  outputsize,
+  options = {}
 ) {
 
   const cleanExchange =
@@ -12733,7 +12740,8 @@ async function fetchMarketCandles(
       symbol,
       interval,
       exchange,
-      outputsize
+      outputsize,
+      options
     )
   );
 }
@@ -12743,7 +12751,8 @@ async function fetchTwelveCandles(
   symbol,
   interval,
   exchange,
-  outputsize
+  outputsize,
+  options = {}
 ) {
 
   const apiKey =
