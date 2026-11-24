@@ -2798,12 +2798,6 @@ async function fetchOecdCsvSeries(
   label
 ) {
 
-  // The watcher reserves its own daily budget only for a real provider
-  // request. A valid server-cache hit returns above without consuming it.
-  if (typeof options.beforeProviderRequest === "function") {
-    options.beforeProviderRequest();
-  }
-
   const controller =
     new AbortController();
 
@@ -12841,6 +12835,11 @@ async function fetchTwelveCandles(
     );
   }
 
+  // Reserve the watcher credit only after a cache miss and immediately
+  // before the Twelve Data provider request.
+  if (typeof options.beforeProviderRequest === "function") {
+    options.beforeProviderRequest();
+  }
 
   const params =
     new URLSearchParams({
