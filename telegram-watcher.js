@@ -1386,6 +1386,13 @@ function spendCredit() {
 
   resetDailyBudgetIfNeeded();
 
+  // Enforce the hard ceiling at the reservation point as well as at the
+  // scan-cycle pre-check. This prevents overlapping recovery/scan work from
+  // reserving more than the fixed daily budget.
+  if (watcherState.watcherCredits >= DAILY_CREDIT_BUDGET) {
+    throw new Error("Watcher daily API credit budget reached");
+  }
+
   const previousCredits = watcherState.watcherCredits;
   watcherState.watcherCredits += 1;
 
@@ -1454,16 +1461,17 @@ async function fetchFrame(
     );
   }
 
-  if (usesWatcherCredit) {
-    spendCredit();
-  }
-
+  // Reserve a watcher credit only when the server's shared candle cache
+  // misses and an actual Twelve Data REST request is about to be sent.
   const result =
     await fetchTwelveCandles(
       market.symbol,
       config.interval,
       market.exchange,
-      config.outputsize
+      config.outputsize,
+      usesWatcherCredit
+        ? { beforeProviderRequest: spendCredit }
+        : undefined
     );
 
   const candles =
