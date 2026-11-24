@@ -7,8 +7,8 @@ const path = require("node:path");
 
 const source = fs.readFileSync(path.join(__dirname, "..", "telegram-watcher.js"), "utf8");
 
-test("Twelve Data watcher daily safety budget is fixed at 600", () => {
-  assert.match(source, /const DAILY_CREDIT_BUDGET\s*=\s*600\s*;/);
+test("Twelve Data watcher daily safety budget is fixed at 700", () => {
+  assert.match(source, /const DAILY_CREDIT_BUDGET\s*=\s*700\s*;/);
   assert.doesNotMatch(source, /TELEGRAM_WATCH_DAILY_CREDIT_BUDGET/);
 });
 
