@@ -124,116 +124,20 @@ const DATA_SOURCE =
 
 
 const WATCH_MARKETS = [
-  {
-    symbol: "BTC/USD",
-    type: "crypto",
-    exchange: "Binance"
-  },
-  {
-    symbol: "ETH/USD",
-    type: "crypto",
-    exchange: "Binance"
-  },
-  {
-    symbol: "SOL/USD",
-    type: "crypto",
-    exchange: "Binance"
-  },
-  {
-    symbol: "XRP/USD",
-    type: "crypto",
-    exchange: "Binance"
-  },
-  {
-    symbol: "EUR/USD",
-    type: "forex",
-    exchange: ""
-  },
-  {
-    symbol: "GBP/USD",
-    type: "forex",
-    exchange: ""
-  },
-  {
-    symbol: "USD/JPY",
-    type: "forex",
-    exchange: ""
-  },
-  {
-    symbol: "AUD/USD",
-    type: "forex",
-    exchange: ""
-  },
-  {
-    symbol: "RELIANCE",
-    type: "stocks",
-    exchange: "NSE"
-  },
-  {
-    symbol: "TCS",
-    type: "stocks",
-    exchange: "NSE"
-  },
-  {
-    symbol: "HDFCBANK",
-    type: "stocks",
-    exchange: "NSE"
-  },
-  {
-    symbol: "ICICIBANK",
-    type: "stocks",
-    exchange: "NSE"
-  },
-  {
-    symbol: "INFY",
-    type: "stocks",
-    exchange: "NSE"
-  },
-  {
-    symbol: "SBIN",
-    type: "stocks",
-    exchange: "NSE"
-  },
-  {
-    symbol: "BHARTIARTL",
-    type: "stocks",
-    exchange: "NSE"
-  },
-  {
-    symbol: "ITC",
-    type: "stocks",
-    exchange: "NSE"
-  },
-  {
-    symbol: "BNB/USD",
-    type: "crypto",
-    exchange: "Binance"
-  },
-  {
-    symbol: "DOGE/USD",
-    type: "crypto",
-    exchange: "Binance"
-  },
-  {
-    symbol: "LINK/USD",
-    type: "crypto",
-    exchange: "Binance"
-  },
-  {
-    symbol: "USD/CAD",
-    type: "forex",
-    exchange: ""
-  },
-  {
-    symbol: "NZD/USD",
-    type: "forex",
-    exchange: ""
-  },
-  {
-    symbol: "USD/CHF",
-    type: "forex",
-    exchange: ""
-  }
+  { symbol: "BTC/USD", type: "crypto", exchange: "Binance" },
+  { symbol: "ETH/USD", type: "crypto", exchange: "Binance" },
+  { symbol: "SOL/USD", type: "crypto", exchange: "Binance" },
+  { symbol: "XRP/USD", type: "crypto", exchange: "Binance" },
+  { symbol: "BNB/USD", type: "crypto", exchange: "Binance" },
+  { symbol: "DOGE/USD", type: "crypto", exchange: "Binance" },
+  { symbol: "LINK/USD", type: "crypto", exchange: "Binance" },
+  { symbol: "EUR/USD", type: "forex", exchange: "" },
+  { symbol: "GBP/USD", type: "forex", exchange: "" },
+  { symbol: "USD/JPY", type: "forex", exchange: "" },
+  { symbol: "AUD/USD", type: "forex", exchange: "" },
+  { symbol: "USD/CAD", type: "forex", exchange: "" },
+  { symbol: "NZD/USD", type: "forex", exchange: "" },
+  { symbol: "USD/CHF", type: "forex", exchange: "" }
 ];
 
 const MODES = [
@@ -301,7 +205,6 @@ const frameCache =
 let marketIndex = 0;
 let started = false;
 let tickRunning = false;
-let indiaTickRunning = false;
 
 let recoveryInFlight = false;
 
@@ -4732,30 +4635,21 @@ function startTelegramTradeWatcher({
   // process boot/redeploy; repeated boot notifications obscure trade alerts.
 
 
-  console.log(
-    `[Telegram Watcher] Ready — ${WATCH_MARKETS.length} pairs • 3 styles • ${DAILY_CREDIT_BUDGET} credit/day watcher budget`
-  );
-
-
-  const upstoxMarkets =
-    WATCH_MARKETS.filter(
-      market =>
-        ["NSE", "BSE"].includes(
-          String(
-            market.exchange || ""
-          ).trim().toUpperCase()
-        )
-    );
-
   const twelveDataMarkets =
     WATCH_MARKETS.filter(
       market =>
-        !["NSE", "BSE"].includes(
-          String(
-            market.exchange || ""
-          ).trim().toUpperCase()
-        )
+        market.type === "crypto" ||
+        market.type === "forex"
     );
+
+  const cryptoMarketCount =
+    twelveDataMarkets.filter(market => market.type === "crypto").length;
+  const forexMarketCount =
+    twelveDataMarkets.filter(market => market.type === "forex").length;
+
+  console.log(
+    `[Telegram Watcher] Ready — ${twelveDataMarkets.length} pairs (${cryptoMarketCount} crypto, ${forexMarketCount} forex) • 3 styles • ${DAILY_CREDIT_BUDGET} credit/day watcher budget`
+  );
 
   let twelveDataIndex = 0;
 
@@ -5499,48 +5393,6 @@ const recoveryCounts = (results) => {
     };
 
 
-  const runUpstoxCycle =
-    async () => {
-
-      // India scanning is disabled temporarily.
-      // Re-enable later by setting ENABLE_INDIA_SCANNING=true.
-      if (process.env.ENABLE_INDIA_SCANNING !== "true") {
-        return;
-      }
-
-      let successful = 0;
-
-      console.log(
-        `[Telegram Watcher] India full scan started — ${upstoxMarkets.length} markets`
-      );
-
-      for (
-        const market of upstoxMarkets
-      ) {
-
-        if (
-          await scanOneMarket(
-            market
-          )
-        ) {
-          successful += 1;
-        }
-      }
-
-      watcherHealth.lastTickError =
-        successful ===
-        upstoxMarkets.length
-          ? null
-          : `${upstoxMarkets.length - successful} India market scan(s) failed`;
-
-      saveState();
-
-      console.log(
-        `[Telegram Watcher] India full scan completed — ${successful}/${upstoxMarkets.length} successful`
-      );
-    };
-
-
   const isTwelveDataWatcherOpen =
     () => {
 
@@ -5665,104 +5517,6 @@ const recoveryCounts = (results) => {
           }
         );
     };
-
-
-  const isIndiaMarketOpen =
-    () => {
-
-      const parts =
-        new Intl.DateTimeFormat(
-          "en-GB",
-          {
-            timeZone: "Asia/Kolkata",
-            weekday: "short",
-            hour: "2-digit",
-            minute: "2-digit",
-            hourCycle: "h23"
-          }
-        )
-          .formatToParts(
-            new Date()
-          )
-          .reduce(
-            (result, part) => {
-              result[part.type] =
-                part.value;
-              return result;
-            },
-            {}
-          );
-
-      if (
-        ["Sat", "Sun"].includes(
-          parts.weekday
-        )
-      ) {
-        return false;
-      }
-
-      const minutes =
-        Number(parts.hour) * 60 +
-        Number(parts.minute);
-
-      return (
-        minutes >= 9 * 60 + 15 &&
-        minutes < 15 * 60 + 30
-      );
-    };
-
-
-  const guardedIndiaRun =
-    async () => {
-
-      if (!isIndiaMarketOpen()) {
-        return;
-      }
-
-      if (indiaTickRunning) {
-
-        console.log(
-          "[Telegram Watcher] Previous India scan still running • overlapping India scan skipped"
-        );
-
-        return;
-      }
-
-      indiaTickRunning = true;
-
-      try {
-
-        await runUpstoxCycle();
-
-      } catch (error) {
-
-        watcherHealth.lastTickError =
-          error.message ||
-          "India watcher scan failed";
-
-        console.error(
-          "[Telegram Watcher] India tick failed:",
-          error.message
-        );
-
-      } finally {
-
-        indiaTickRunning = false;
-      }
-    };
-
-
-  setTimeout(
-    () =>
-      guardedIndiaRun(),
-    15 * 1000
-  );
-
-  setInterval(
-    () =>
-      guardedIndiaRun(),
-    ROTATION_MS
-  );
 
 
   setTimeout(
