@@ -12,6 +12,12 @@ test("Twelve Data watcher daily safety budget is fixed at 600", () => {
   assert.doesNotMatch(source, /TELEGRAM_WATCH_DAILY_CREDIT_BUDGET/);
 });
 
+test("watcher credit reservation enforces the fixed ceiling atomically", () => {
+  assert.match(source, /watcherState\.watcherCredits >= DAILY_CREDIT_BUDGET/);
+  assert.match(source, /beforeProviderRequest:\s*spendCredit/);
+  assert.doesNotMatch(source, /if \(usesWatcherCredit\)\s*\{\s*spendCredit\(\);/);
+});
+
 test("daily watcher budget resets by Asia/Kolkata calendar date", () => {
   assert.match(source, /const today = currentIstDay\(\);[\s\S]{0,220}watcherState\.day !== today/);
   assert.doesNotMatch(source, /watcherState\.day !== new Date\(\)\.toISOString\(\)\.slice\(0, 10\)/);
