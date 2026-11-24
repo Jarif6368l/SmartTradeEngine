@@ -11,7 +11,7 @@ test("watcher credit reservation is not referenced by the OECD helper", () => {
   assert.notEqual(start, -1, "OECD helper must exist");
   const next = source.indexOf("\n\nasync function ", start + 1);
   const helper = source.slice(start, next === -1 ? source.length : next);
-  assert.doesNotMatch(helper, /options\\.beforeProviderRequest/);
+  assert.doesNotMatch(helper, /options\.beforeProviderRequest/);
 });
 
 test("Twelve Data candle fetch reserves watcher credit only after a cache miss", () => {
