@@ -185,7 +185,7 @@ const ROTATION_MS =
   );
 
 // Hard application-level safety ceiling. Do not raise this through env config.
-const DAILY_CREDIT_BUDGET = 600;
+const DAILY_CREDIT_BUDGET = 700;
 
 const STATE_FILE =
   process.env.TELEGRAM_WATCH_STATE_FILE
@@ -818,7 +818,7 @@ function resetDailyBudgetIfNeeded() {
     watcherState.day = today;
     watcherState.watcherCredits = 0;
     saveState();
-    console.log("[Scanner] Daily 600-credit budget reset (Asia/Kolkata): " + today);
+    console.log(`[Scanner] Daily ${DAILY_CREDIT_BUDGET}-credit budget reset (Asia/Kolkata): ${today}`);
   }
 }
 
