@@ -2060,6 +2060,14 @@ async function sendTelegram(text) {
   return null;
 }
 
+function requireTelegramDelivery(result) {
+  if (!result || !result.message_id) {
+    throw new Error("Telegram did not confirm trade-alert delivery");
+  }
+  return result;
+}
+
+
 /* === SL HIT REASON: factual reason derivation from existing stored data ===
  *
  * Uses ONLY already-stored fields on the history record. No brain re-run.
@@ -4387,9 +4395,7 @@ async function scanMarket(
      * If Telegram fails, keep the old setup active
      * so the watcher can retry safely later.
      */
-    await sendTelegram(
-      text
-    );
+    requireTelegramDelivery(await sendTelegram(text));
 
 
     if (
@@ -4446,9 +4452,7 @@ async function scanMarket(
      * Send Telegram first so a delivery failure does not
      * close or replace the currently active setup.
      */
-    await sendTelegram(
-      text
-    );
+    requireTelegramDelivery(await sendTelegram(text));
 
 
     if (
@@ -4506,9 +4510,7 @@ async function scanMarket(
         strongest.analysis
       );
 
-    await sendTelegram(
-      text
-    );
+    requireTelegramDelivery(await sendTelegram(text));
 
 
     const historyEntry =
