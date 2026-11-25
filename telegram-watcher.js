@@ -439,6 +439,8 @@ function defaultState() {
 
     watcherCredits: 0,
 
+    providerQuotaExhaustedDay: null,
+    providerQuotaAlertDay: null,
 
     marketIndex: 0,
 
@@ -817,6 +819,8 @@ function resetDailyBudgetIfNeeded() {
   if (watcherState.day !== today) {
     watcherState.day = today;
     watcherState.watcherCredits = 0;
+    watcherState.providerQuotaExhaustedDay = null;
+    watcherState.providerQuotaAlertDay = null;
     saveState();
     console.log(`[Scanner] Daily ${DAILY_CREDIT_BUDGET}-credit budget reset (Asia/Kolkata): ${today}`);
   }
@@ -1156,8 +1160,8 @@ function budgetAvailable() {
   resetDailyBudgetIfNeeded();
 
   return (
-    watcherState.watcherCredits <
-    DAILY_CREDIT_BUDGET
+    watcherState.watcherCredits < DAILY_CREDIT_BUDGET &&
+    watcherState.providerQuotaExhaustedDay !== currentIstDay()
   );
 }
 
@@ -1285,6 +1289,28 @@ async function maybeNotifyBudgetExhausted() {
 }
 
 
+async function maybeNotifyProviderQuotaExhausted() {
+  try {
+    const today = currentIstDay();
+    if (watcherState.providerQuotaAlertDay === today) return;
+
+    await sendTelegram([
+      "⛔ TWELVE DATA ACCOUNT DAILY LIMIT REACHED",
+      "",
+      "Crypto/Forex watcher scanning has been paused for today.",
+      "It will automatically resume after the next India-time daily reset.",
+      "",
+      "The provider account limit is separate from the app's 700-credit watcher budget."
+    ].join("\n"));
+
+    watcherState.providerQuotaAlertDay = today;
+    saveState();
+  } catch (error) {
+    console.error("[Telegram Watcher] Provider quota alert failed:", error.message);
+  }
+}
+
+
 function spendCredit() {
 
   resetDailyBudgetIfNeeded();
@@ -1366,8 +1392,9 @@ async function fetchFrame(
 
   // Reserve a watcher credit only when the server's shared candle cache
   // misses and an actual Twelve Data REST request is about to be sent.
-  const result =
-    await fetchTwelveCandles(
+  let result;
+  try {
+    result = await fetchTwelveCandles(
       market.symbol,
       config.interval,
       market.exchange,
@@ -1376,6 +1403,19 @@ async function fetchFrame(
         ? { beforeProviderRequest: spendCredit }
         : undefined
     );
+  } catch (error) {
+    const message = String(error?.message || error || "");
+    if (
+      usesWatcherCredit &&
+      /run out of api credits|current limit being|daily.*credit limit|credits for the day/i.test(message)
+    ) {
+      watcherState.providerQuotaExhaustedDay = currentIstDay();
+      saveState();
+      console.error("[Telegram Watcher] Twelve Data provider daily quota exhausted — pausing all watcher scans until the next Asia/Kolkata day.");
+      void maybeNotifyProviderQuotaExhausted();
+    }
+    throw error;
+  }
 
   const candles =
     normalizeCandles(
@@ -5440,11 +5480,14 @@ const recoveryCounts = (results) => {
         !budgetAvailable()
       ) {
 
-        console.log(
-          `[Telegram Watcher] Twelve Data watcher budget reached (${watcherState.watcherCredits}/${DAILY_CREDIT_BUDGET})`
-        );
-
-        void maybeNotifyBudgetExhausted();
+        if (watcherState.providerQuotaExhaustedDay === currentIstDay()) {
+          console.log("[Telegram Watcher] Provider daily quota exhausted — scanning paused until next Asia/Kolkata day.");
+        } else {
+          console.log(
+            `[Telegram Watcher] App watcher budget reached (${watcherState.watcherCredits}/${DAILY_CREDIT_BUDGET})`
+          );
+          void maybeNotifyBudgetExhausted();
+        }
 
         return;
       }
